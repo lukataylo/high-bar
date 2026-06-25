@@ -200,8 +200,8 @@ export function Keynote() {
           <img
             src="/logo.svg"
             alt="High Bar"
-            width={24}
-            height={26}
+            width={37}
+            height={40}
             className="keynote-logo"
           />
           <span>High Bar</span>
