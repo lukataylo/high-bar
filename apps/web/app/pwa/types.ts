@@ -15,7 +15,10 @@ export interface Question {
   sourceLabel: string;
   domain: Domain;
   reward: number;
-  sla: string;
+  /** SLA window in hours, e.g. 24 / 48 — used for the "24h SLA" label. */
+  slaHours: number;
+  /** Absolute deadline (epoch ms) by which the answer is due. Drives the live countdown. */
+  expiresAt: number;
 }
 
 export type AnswerStatus = "claimed" | "answered";

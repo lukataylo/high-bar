@@ -1,16 +1,14 @@
 "use client";
 
+import { Bot, Check, Inbox, Tag, User, X } from "lucide-react";
 import {
-  Bot,
-  Check,
-  Clock3,
-  DollarSign,
-  Inbox,
-  Tag,
-  User,
-  X
-} from "lucide-react";
-import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent
+} from "react";
+import { Countdown } from "./Countdown";
+import styles from "./enhance.module.css";
 import type { Question } from "./types";
 
 const THRESHOLD = 110;
@@ -25,10 +23,12 @@ const money = new Intl.NumberFormat("en-US", {
 
 export function SwipeDeck({
   questions,
+  now,
   onClaim,
   onSkip
 }: {
   questions: Question[];
+  now: number;
   onClaim: (id: string) => void;
   onSkip: (id: string) => void;
 }) {
@@ -79,6 +79,17 @@ export function SwipeDeck({
     }
   }
 
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (!top || leaving) return;
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      commit("right");
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      commit("left");
+    }
+  }
+
   if (!top) {
     return (
       <div className="swipe-empty" role="status">
@@ -97,7 +108,13 @@ export function SwipeDeck({
 
   return (
     <div className="swipe-area">
-      <div className="swipe-deck">
+      <div
+        aria-label="Question deck. Swipe right or press the right arrow to answer, swipe left or press the left arrow to pass."
+        className={`swipe-deck ${styles.deckFocus}`}
+        onKeyDown={handleKeyDown}
+        role="group"
+        tabIndex={0}
+      >
         {stack
           .map((question, index) => ({ question, index }))
           .reverse()
@@ -109,7 +126,7 @@ export function SwipeDeck({
             return (
               <div
                 aria-hidden={!isTop}
-                className={`swipe-card${isTop ? " is-top" : ""}${leaving && isTop ? " is-leaving" : ""}`}
+                className={`swipe-card${isTop ? " is-top" : ""}${leaving && isTop ? " is-leaving" : ""}${isTop ? ` ${styles.topHighlight}` : ""}`}
                 key={question.id}
                 onPointerCancel={isTop ? handleUp : undefined}
                 onPointerDown={isTop ? handleDown : undefined}
@@ -123,19 +140,29 @@ export function SwipeDeck({
               >
                 {isTop ? (
                   <>
-                    <span
-                      className="swipe-hint claim"
-                      style={{ opacity: claimHint }}
+                    <div
                       aria-hidden="true"
+                      className={`${styles.tint} ${styles.tintAnswer}`}
+                      style={{ opacity: claimHint }}
+                    />
+                    <div
+                      aria-hidden="true"
+                      className={`${styles.tint} ${styles.tintPass}`}
+                      style={{ opacity: skipHint }}
+                    />
+                    <span
+                      aria-hidden="true"
+                      className={`${styles.affordance} ${styles.affordanceAnswer}`}
+                      style={{ opacity: claimHint }}
                     >
-                      <Check size={16} /> Claim
+                      <Check size={20} /> Answer
                     </span>
                     <span
-                      className="swipe-hint skip"
-                      style={{ opacity: skipHint }}
                       aria-hidden="true"
+                      className={`${styles.affordance} ${styles.affordancePass}`}
+                      style={{ opacity: skipHint }}
                     >
-                      <X size={16} /> Skip
+                      <X size={20} /> Pass
                     </span>
                   </>
                 ) : null}
@@ -154,20 +181,18 @@ export function SwipeDeck({
                 <h2 className="swipe-card-title">{question.title}</h2>
                 <p className="swipe-card-detail">{question.detail}</p>
 
-                <dl className="swipe-card-meta">
-                  <div>
-                    <dt>
-                      <DollarSign size={13} /> Reward
-                    </dt>
-                    <dd>{money.format(question.reward)}</dd>
+                <div className={styles.cardFooter}>
+                  <div className={styles.bounty}>
+                    <span className={styles.bountyLabel}>Bounty</span>
+                    <span className={styles.bountyAmount}>{money.format(question.reward)}</span>
                   </div>
-                  <div>
-                    <dt>
-                      <Clock3 size={13} /> SLA
-                    </dt>
-                    <dd>{question.sla}</dd>
+                  <div className={styles.cardClock}>
+                    <span className={styles.cardSla}>{question.slaHours}h SLA</span>
+                    {isTop ? (
+                      <Countdown expiresAt={question.expiresAt} now={now} />
+                    ) : null}
                   </div>
-                </dl>
+                </div>
               </div>
             );
           })}
@@ -175,7 +200,7 @@ export function SwipeDeck({
 
       <div className="swipe-controls">
         <button
-          aria-label={`Skip: ${top.title}`}
+          aria-label={`Pass: ${top.title}`}
           className="swipe-button skip"
           onClick={() => commit("left")}
           type="button"
@@ -186,7 +211,7 @@ export function SwipeDeck({
           {questions.length} left
         </span>
         <button
-          aria-label={`Claim: ${top.title}`}
+          aria-label={`Answer: ${top.title}`}
           className="swipe-button claim"
           onClick={() => commit("right")}
           type="button"

@@ -9,7 +9,7 @@ import {
   Wallet
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { AccountTab } from "./AccountTab";
 import { AnswersTab } from "./AnswersTab";
 import {
@@ -44,6 +44,13 @@ export default function ExpertPwaPage() {
   const [claimed, setClaimed] = useState<ClaimedQuestion[]>([]);
   const [payouts] = useState<Payout[]>(INITIAL_PAYOUTS);
 
+  // Single shared 1s ticker that drives every live countdown across tabs.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const [displayName, setDisplayName] = useState("Maya Chen");
   const [email, setEmail] = useState("expert@highbar.dev");
   const [domains, setDomains] = useState<Domain[]>([
@@ -57,6 +64,11 @@ export default function ExpertPwaPage() {
       claimed
         .filter((question) => question.status === "answered")
         .reduce((sum, question) => sum + question.reward, 0),
+    [claimed]
+  );
+
+  const unansweredCount = useMemo(
+    () => claimed.filter((question) => question.status === "claimed").length,
     [claimed]
   );
 
@@ -177,12 +189,18 @@ export default function ExpertPwaPage() {
 
         <main className="pwa-content">
           {activeTab === "queue" ? (
-            <SwipeDeck questions={queue} onClaim={handleClaim} onSkip={handleSkip} />
+            <SwipeDeck
+              now={now}
+              onClaim={handleClaim}
+              onSkip={handleSkip}
+              questions={queue}
+            />
           ) : null}
 
           {activeTab === "answers" ? (
             <AnswersTab
               claimed={claimed}
+              now={now}
               onDraftChange={handleDraftChange}
               onSubmit={handleSubmitAnswer}
             />
@@ -217,7 +235,7 @@ export default function ExpertPwaPage() {
             const Icon = tab.icon;
             const active = tab.id === activeTab;
             const badge =
-              tab.id === "answers" && claimed.length > 0 ? claimed.length : null;
+              tab.id === "answers" && unansweredCount > 0 ? unansweredCount : null;
             return (
               <button
                 aria-current={active ? "page" : undefined}

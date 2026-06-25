@@ -1862,3 +1862,550 @@ p {
     flex-direction: column;
   }
 }
+
+/* --- Keynote landing --- */
+
+.keynote {
+  --keynote-max: 1200px;
+  position: relative;
+  background: var(--canvas);
+  overflow-x: clip;
+}
+
+.keynote-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 68px;
+  padding: 0 max(24px, calc((100vw - var(--keynote-max)) / 2 + 24px));
+  border-bottom: 1px solid color-mix(in srgb, var(--hairline) 80%, transparent);
+  background: color-mix(in srgb, var(--canvas) 88%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.keynote-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.keynote-logo {
+  display: block;
+  height: 24px;
+  width: auto;
+}
+
+.keynote-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 34px;
+  color: var(--body);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.keynote-nav-links a:hover {
+  color: var(--ink);
+}
+
+.keynote-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  background: var(--ink);
+  color: var(--canvas);
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.keynote-nav-cta:hover {
+  background: #000;
+}
+
+/* Buttons */
+.keynote-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  border-radius: 9999px;
+  padding: 15px 28px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.keynote-btn:hover {
+  transform: translateY(-1px);
+}
+
+.keynote-btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 14px 30px -16px color-mix(in srgb, var(--primary) 80%, transparent);
+}
+
+.keynote-btn-primary:hover {
+  background: var(--primary-active);
+}
+
+.keynote-btn-ghost {
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+  color: var(--ink);
+}
+
+.keynote-btn-ghost:hover {
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+}
+
+.keynote-btn-dark {
+  background: var(--ink);
+  color: var(--canvas);
+}
+
+.keynote-btn-dark:hover {
+  background: #000;
+}
+
+/* Shared kicker */
+.keynote-kicker {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.keynote-kicker-light {
+  color: color-mix(in srgb, var(--canvas) 64%, transparent);
+}
+
+/* 1. Hero */
+.keynote-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: calc(100vh - 68px);
+  padding: 48px max(24px, calc((100vw - 980px) / 2)) 96px;
+  text-align: center;
+}
+
+.keynote-hero-art {
+  width: min(560px, 78vw);
+  height: auto;
+  margin-bottom: 8px;
+}
+
+.keynote-hero-title {
+  max-width: 16ch;
+  margin: 0;
+  font-size: clamp(44px, 8.5vw, 104px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.keynote-hero-sub {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--body);
+  font-size: clamp(19px, 2.6vw, 28px);
+  font-weight: 400;
+  line-height: 1.35;
+}
+
+.keynote-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+/* 2. Live Q&A gallery */
+.keynote-gallery {
+  background: var(--canvas-soft);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  padding: 88px 0;
+  overflow: hidden;
+}
+
+.keynote-gallery-head {
+  max-width: var(--keynote-max);
+  margin: 0 auto 40px;
+  padding: 0 max(24px, calc((100vw - var(--keynote-max)) / 2 + 24px));
+}
+
+.keynote-gallery-title {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 52px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+
+.keynote-gallery-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.keynote-gallery-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+/* When GSAP pins the section, JS drives the transform instead of scroll. */
+.keynote-gallery-viewport.is-pinned {
+  overflow: visible;
+}
+
+.keynote-track {
+  display: flex;
+  gap: 24px;
+  width: max-content;
+  margin: 0;
+  padding: 4px max(24px, calc((100vw - var(--keynote-max)) / 2 + 24px));
+  list-style: none;
+}
+
+.keynote-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 380px;
+  max-width: 82vw;
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  background: var(--surface-card);
+  padding: 28px;
+  box-shadow: 0 24px 48px -36px rgba(38, 37, 30, 0.5);
+}
+
+.keynote-card-domain {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--primary-active);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.keynote-card-q {
+  margin: 0;
+  color: var(--ink);
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.28;
+}
+
+.keynote-card-a {
+  margin: 0;
+  color: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.keynote-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.keynote-card-expert {
+  display: grid;
+  gap: 2px;
+}
+
+.keynote-card-expert strong {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.keynote-card-expert span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.keynote-card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--timeline-done);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.keynote-card-rating svg {
+  fill: currentColor;
+}
+
+/* 3. Two tiles */
+.keynote-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: var(--keynote-max);
+  margin: 0 auto;
+  padding: 112px max(24px, calc((100vw - var(--keynote-max)) / 2 + 24px));
+}
+
+.keynote-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 360px;
+  border-radius: 24px;
+  background: var(--surface-card);
+  border: 1px solid var(--hairline);
+  padding: 40px;
+}
+
+.keynote-tile-title {
+  margin: 0;
+  font-size: clamp(32px, 4.5vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+}
+
+.keynote-tile-body {
+  max-width: 38ch;
+  margin: 0;
+  color: var(--body);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.keynote-tile .keynote-btn {
+  margin-top: auto;
+}
+
+/* 4. For agents */
+.keynote-agents {
+  background: var(--ink);
+  color: var(--canvas);
+  padding: 120px max(24px, calc((100vw - 880px) / 2));
+}
+
+.keynote-agents-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.keynote-agents-title {
+  margin: 0 0 16px;
+  font-size: clamp(32px, 5.5vw, 60px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+}
+
+.keynote-agents-caption {
+  max-width: 52ch;
+  margin: 0 auto 36px;
+  color: color-mix(in srgb, var(--canvas) 72%, transparent);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.keynote-terminal {
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--canvas) 16%, transparent);
+  background: #1a1a16;
+  overflow: hidden;
+  text-align: left;
+}
+
+.keynote-terminal-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--canvas) 12%, transparent);
+  color: color-mix(in srgb, var(--canvas) 50%, transparent);
+}
+
+.keynote-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--canvas) 22%, transparent);
+}
+
+.keynote-terminal-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+.keynote-cmd {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #f4f3ee;
+  font-size: 15px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.keynote-cmd-prompt {
+  margin-right: 10px;
+  color: var(--primary);
+  user-select: none;
+}
+
+.keynote-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--canvas) 22%, transparent);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--canvas) 8%, transparent);
+  color: var(--canvas);
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.keynote-copy:hover {
+  background: color-mix(in srgb, var(--canvas) 16%, transparent);
+}
+
+.keynote-json {
+  margin: 20px 0 0;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--canvas) 12%, transparent);
+  background: color-mix(in srgb, var(--canvas) 4%, transparent);
+  padding: 18px 20px;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.keynote-json code {
+  color: color-mix(in srgb, var(--canvas) 78%, transparent);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.keynote-sr-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 5. Footer */
+.keynote-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+  max-width: var(--keynote-max);
+  margin: 0 auto;
+  padding: 56px max(24px, calc((100vw - var(--keynote-max)) / 2 + 24px));
+  border-top: 1px solid var(--hairline);
+}
+
+.keynote-footer-tag {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.keynote-footer-links {
+  display: flex;
+  gap: 24px;
+  color: var(--body);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.keynote-footer-links a:hover {
+  color: var(--ink);
+}
+
+@media (max-width: 860px) {
+  .keynote-nav-links {
+    display: none;
+  }
+
+  .keynote-tiles {
+    grid-template-columns: 1fr;
+    padding-top: 72px;
+    padding-bottom: 72px;
+  }
+
+  .keynote-tile {
+    min-height: 0;
+    padding: 32px;
+  }
+
+  .keynote-agents {
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 560px) {
+  .keynote-hero {
+    padding-bottom: 64px;
+  }
+
+  .keynote-card {
+    width: 300px;
+    padding: 22px;
+  }
+
+  .keynote-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keynote-btn:hover {
+    transform: none;
+  }
+}

@@ -1,6 +1,8 @@
 "use client";
 
 import { Bot, CheckCircle2, Inbox, SendHorizontal, User } from "lucide-react";
+import { Countdown } from "./Countdown";
+import styles from "./enhance.module.css";
 import type { ClaimedQuestion } from "./types";
 
 const money = new Intl.NumberFormat("en-US", {
@@ -11,10 +13,12 @@ const money = new Intl.NumberFormat("en-US", {
 
 export function AnswersTab({
   claimed,
+  now,
   onDraftChange,
   onSubmit
 }: {
   claimed: ClaimedQuestion[];
+  now: number;
   onDraftChange: (id: string, value: string) => void;
   onSubmit: (id: string) => void;
 }) {
@@ -55,9 +59,20 @@ export function AnswersTab({
 
             <div className="answer-card-meta">
               <span>{question.domain}</span>
-              <span>{money.format(question.reward)}</span>
-              <span>SLA {question.sla}</span>
+              <span>{question.slaHours}h SLA</span>
             </div>
+
+            {answered ? null : (
+              <div className={styles.answerClockRow}>
+                <div className={styles.answerBounty}>
+                  <span className={styles.bountyLabel}>Bounty</span>
+                  <span className={styles.bountyAmountSm}>
+                    {money.format(question.reward)}
+                  </span>
+                </div>
+                <Countdown expiresAt={question.expiresAt} now={now} />
+              </div>
+            )}
 
             {answered ? (
               <div className="answer-readonly">

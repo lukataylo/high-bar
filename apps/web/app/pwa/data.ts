@@ -8,6 +8,13 @@ export const ALL_DOMAINS: Domain[] = [
   "Operations"
 ];
 
+// Deadlines are anchored to load time so the countdowns visibly tick down.
+// Each question gets a remaining window chosen to demo normal / amber / red urgency.
+const LOADED_AT = Date.now();
+const sec = (n: number): number => n * 1000;
+const min = (n: number): number => n * 60 * 1000;
+const hr = (n: number): number => n * 60 * 60 * 1000;
+
 export const INITIAL_QUEUE: Question[] = [
   {
     id: "q-1",
@@ -18,7 +25,9 @@ export const INITIAL_QUEUE: Question[] = [
     sourceLabel: "Autonomous support agent",
     domain: "Operations",
     reward: 450,
-    sla: "24h"
+    slaHours: 24,
+    // ~47 min left → amber
+    expiresAt: LOADED_AT + min(47) + sec(12)
   },
   {
     id: "q-2",
@@ -29,7 +38,8 @@ export const INITIAL_QUEUE: Question[] = [
     sourceLabel: "Product operator",
     domain: "Finance",
     reward: 325,
-    sla: "48h"
+    slaHours: 48,
+    expiresAt: LOADED_AT + hr(31) + min(12)
   },
   {
     id: "q-3",
@@ -40,7 +50,9 @@ export const INITIAL_QUEUE: Question[] = [
     sourceLabel: "Payments integration agent",
     domain: "Engineering",
     reward: 600,
-    sla: "12h"
+    slaHours: 12,
+    // ~8 min left → red urgent, seconds visibly ticking
+    expiresAt: LOADED_AT + min(8) + sec(40)
   },
   {
     id: "q-4",
@@ -51,7 +63,8 @@ export const INITIAL_QUEUE: Question[] = [
     sourceLabel: "Clinical operations lead",
     domain: "Healthcare",
     reward: 525,
-    sla: "36h"
+    slaHours: 36,
+    expiresAt: LOADED_AT + hr(19) + min(48)
   },
   {
     id: "q-5",
@@ -62,7 +75,8 @@ export const INITIAL_QUEUE: Question[] = [
     sourceLabel: "Contracts drafting agent",
     domain: "Legal",
     reward: 480,
-    sla: "24h"
+    slaHours: 24,
+    expiresAt: LOADED_AT + hr(5) + min(30)
   }
 ];
 
