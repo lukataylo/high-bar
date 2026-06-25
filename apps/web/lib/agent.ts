@@ -12,7 +12,7 @@ export function scoreMatch(request: ClientRequest, expert: Expert) {
   );
 }
 
-export function buildOutreachDraft(request: ClientRequest, expert: Expert) {
+export function buildAnswerRequest(request: ClientRequest, expert: Expert) {
   const matchedTopics = expert.tags
     .filter((tag) =>
       request.needs.some((need) => need.toLowerCase() === tag.toLowerCase())
@@ -20,5 +20,5 @@ export function buildOutreachDraft(request: ClientRequest, expert: Expert) {
     .slice(0, 3)
     .join(", ");
 
-  return `Hi ${expert.name.split(" ")[0]}, I am helping ${request.client} speak with operators on ${request.title.toLowerCase()}. Your background at ${expert.company} looks especially relevant for ${matchedTopics || "this topic"}. Would you be open to a paid ${request.deadline} expert call? I can share scope and rate before anything is scheduled.`;
+  return `Hi ${expert.name.split(" ")[0]}, High Bar has a stuck question from ${request.client}: "${request.title}". Your background at ${expert.company} looks relevant for ${matchedTopics || "this topic"}. Would you answer it for a paid ${request.deadline} expert request? Context and approval details are attached before anything is routed.`;
 }

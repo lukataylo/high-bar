@@ -1,6 +1,6 @@
 import "server-only";
 
-import { buildOutreachDraft, scoreMatch } from "./agent";
+import { buildAnswerRequest, scoreMatch } from "./agent";
 import { experts, payoutQueue, requests } from "./data";
 import type { ClientRequest, Expert, Payout } from "./types";
 
@@ -11,7 +11,7 @@ export type DashboardData = {
   experts: Expert[];
   payoutQueue: Payout[];
   rankedExpertsByRequest: Record<string, RankedExpert[]>;
-  outreachDrafts: Record<string, Record<string, string>>;
+  answerDrafts: Record<string, Record<string, string>>;
   totalBudgetUsd: number;
   draftCount: number;
 };
@@ -29,13 +29,13 @@ export function getDashboardData(): DashboardData {
   const rankedExpertsByRequest = Object.fromEntries(
     requests.map((request) => [request.id, rankExpertsForRequest(request)])
   );
-  const outreachDrafts = Object.fromEntries(
+  const answerDrafts = Object.fromEntries(
     requests.map((request) => [
       request.id,
       Object.fromEntries(
         rankedExpertsByRequest[request.id].map((expert) => [
           expert.id,
-          buildOutreachDraft(request, expert)
+          buildAnswerRequest(request, expert)
         ])
       )
     ])
@@ -46,7 +46,7 @@ export function getDashboardData(): DashboardData {
     experts,
     payoutQueue,
     rankedExpertsByRequest,
-    outreachDrafts,
+    answerDrafts,
     totalBudgetUsd: requests.reduce(
       (sum, request) => sum + request.budgetUsd,
       0
@@ -67,9 +67,9 @@ export function getAgentResponse() {
     recommendedDrafts: rankedExperts.slice(0, 3).map((expert) => ({
       expertId: expert.id,
       expertName: expert.name,
-      channel: "LinkedIn",
+      channel: "High Bar",
       requiresHumanSend: true,
-      draft: buildOutreachDraft(request, expert)
+      draft: buildAnswerRequest(request, expert)
     }))
   };
 }

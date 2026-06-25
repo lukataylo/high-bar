@@ -234,6 +234,10 @@ p {
   gap: 18px;
 }
 
+.cta-actions {
+  justify-content: center;
+}
+
 .ide-mockup-card,
 .feature-card,
 .comparison-card,
@@ -631,8 +635,7 @@ p {
     gap: 14px;
   }
 
-  .text-link,
-  .nav-actions .button-primary {
+  .text-link {
     display: none;
   }
 

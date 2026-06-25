@@ -32,11 +32,11 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 const timeline = [
-  ["Thinking", "Understand diligence scope and constraints"],
-  ["Reading", "Review expert graph and prior call notes"],
-  ["Grepping", "Find operators with matching scars"],
-  ["Editing", "Draft compliant manual outreach"],
-  ["Done", "Queue approvals without moving money"]
+  ["Thinking", "Detect where the agent is stuck"],
+  ["Reading", "Review prior attempts and context"],
+  ["Grepping", "Find humans with matching expertise"],
+  ["Editing", "Package a precise answer request"],
+  ["Done", "Pay the expert after human review"]
 ] as const;
 
 export function Dashboard({
@@ -70,18 +70,18 @@ export function Dashboard({
           className={menuOpen ? "nav-links open" : "nav-links"}
           id="primary-navigation"
         >
-          <a href="#product">Product</a>
-          <a href="#workflow">Workflow</a>
-          <a href="#guardrails">Guardrails</a>
-          <a href="#launch">Launch</a>
+          <a href="#product">How it works</a>
+          <a href="#workflow">Routing</a>
+          <a href="#guardrails">Trust</a>
+          <a href="#earn">Earn</a>
         </nav>
 
         <div className="nav-actions">
           <a className="text-link" href="/api/agent">
             API
           </a>
-          <a className="button-primary" href="#launch">
-            Get live
+          <a className="button-primary" href="#earn">
+            Ask a question
           </a>
           <button
             aria-controls="primary-navigation"
@@ -98,72 +98,72 @@ export function Dashboard({
 
       <section className="hero-band" id="top">
         <div className="hero-copy">
-          <p className="section-kicker">Expert network operations</p>
-          <h1>AI-assisted diligence calls, without letting the agent touch the wire.</h1>
+          <p className="section-kicker">AI + human expert network</p>
+          <h1>When agents get stuck, High Bar routes the question to a human who knows.</h1>
           <p>
-            High Bar turns client requests into ranked expert shortlists, manual outreach
-            drafts, and payout approvals. It is built for fast-moving teams who still need a
-            human checkpoint before money or messages leave the system.
+            High Bar lets people earn money by answering hard questions that AI agents and
+            other humans cannot finish on their own. The system captures context, finds the
+            right expert, and keeps approval visible before answers or payments move.
           </p>
           <div className="hero-actions">
             <a className="button-download" href="#product">
-              View control room
+              See how it works
               <ArrowRight size={16} />
             </a>
-            <a className="button-tertiary" href="#guardrails">
-              Read guardrails
+            <a className="button-tertiary" href="#earn">
+              Join as an expert
             </a>
           </div>
         </div>
 
         <ProductMockup
-          requestTitle={firstRequest?.title ?? "Voice AI diligence"}
+          requestTitle={firstRequest?.title ?? "Why is this agent failing?"}
           expertName={firstExperts[0]?.name ?? "Maya Chen"}
           matchScore={firstExperts[0]?.matchScore ?? 100}
           payoutTotal={payoutTotal}
         />
       </section>
 
-      <section className="section-grid metrics-strip" aria-label="Launch metrics">
+      <section className="section-grid metrics-strip" aria-label="Network metrics">
         <Metric label="Open demand" value={String(data.requests.length)} />
-        <Metric label="Expert pool" value={String(data.experts.length)} />
-        <Metric label="Drafts ready" value={String(data.draftCount)} />
-        <Metric label="Queued payouts" value={money.format(payoutTotal)} />
+        <Metric label="Human experts" value={String(data.experts.length)} />
+        <Metric label="Answers queued" value={String(data.draftCount)} />
+        <Metric label="Expert earnings" value={money.format(payoutTotal)} />
       </section>
 
       <section className="content-section split-section" id="product">
         <div>
           <p className="section-kicker">Product</p>
-          <h2>One calm surface for the messy middle of expert calls.</h2>
+          <h2>A marketplace for questions that need human judgment.</h2>
         </div>
         <div className="feature-grid">
           <Feature
             icon={<Search size={18} />}
-            title="Rank the right operators"
-            body="Match client needs against expert tags, availability, confidence, and rate before anyone starts outreach."
+            title="Find the person who knows"
+            body="Match stuck questions against expert tags, availability, confidence, and rate before asking for an answer."
           />
           <Feature
             icon={<MailPlus size={18} />}
-            title="Draft-only outreach"
-            body="LinkedIn copy is generated for review. The system never auto-sends social outreach."
+            title="Package the context"
+            body="Agents hand over the failed path, evidence, and exact question so humans can answer quickly."
           />
           <Feature
             icon={<WalletCards size={18} />}
-            title="Payout queue"
-            body="Every payout is visible with approval thresholds and daily caps surfaced before release."
+            title="Pay for useful answers"
+            body="Humans can earn for resolving blockers, with payout thresholds and daily caps surfaced before release."
           />
           <Feature
             icon={<Database size={18} />}
-            title="Ready for persistence"
-            body="Postgres and Redis are provisioned on Railway; the MVP uses seed data until the backed services are wired."
+            title="Built for agent handoffs"
+            body="Postgres and Redis are provisioned on Railway; the MVP is ready for live routing, queues, and review."
           />
         </div>
       </section>
 
       <section className="content-section workflow-section" id="workflow">
         <div className="section-heading">
-          <p className="section-kicker">Agent timeline</p>
-          <h2>AI work is legible before it becomes action.</h2>
+          <p className="section-kicker">Routing timeline</p>
+          <h2>Every handoff shows why a human is needed.</h2>
         </div>
         <div className="timeline-card">
           {timeline.map(([stage, detail]) => (
@@ -181,8 +181,8 @@ export function Dashboard({
             <p className="section-kicker">Guardrails</p>
             <h2>Automation where it helps. Approval where it matters.</h2>
             <p>
-              The default launch posture is conservative: draft-only outreach, approval
-              thresholds, daily payout caps, and a kill switch visible in the interface.
+              The launch posture is conservative: answer requests are visible, payouts stay
+              gated, and operators can pause routing with a kill switch.
             </p>
           </div>
           <div className="guardrail-list">
@@ -205,17 +205,21 @@ export function Dashboard({
         </div>
       </section>
 
-      <section className="cta-band" id="launch">
-        <p className="section-kicker">Launch build</p>
-        <h2>High Bar is ready for a live demo path.</h2>
+      <section className="cta-band" id="earn">
+        <p className="section-kicker">Earn with expertise</p>
+        <h2>High Bar is ready to route stuck questions to paid human experts.</h2>
         <p>
-          The current build is public-demo friendly by default. Set
-          <code>AUTH_REQUIRED=true</code> when the team wants to lock it behind Basic or
-          Bearer auth.
+          Bring a difficult question, or join the network as a human expert who gets paid
+          when your answer resolves the blocker.
         </p>
-        <a className="button-primary" href="/api/payouts">
-          Inspect payouts API
-        </a>
+        <div className="hero-actions cta-actions">
+          <a className="button-primary" href="/api/agent">
+            Ask a question
+          </a>
+          <a className="button-tertiary" href="/api/payouts">
+            Join as an expert
+          </a>
+        </div>
       </section>
 
       <footer className="footer">
@@ -223,7 +227,7 @@ export function Dashboard({
           <Command size={18} />
           <span>High Bar</span>
         </div>
-        <span>Expert network operations, built for guarded autonomy.</span>
+        <span>Human expertise for the questions automation cannot finish.</span>
       </footer>
     </main>
   );
@@ -246,48 +250,48 @@ function ProductMockup({
         <span />
         <span />
         <span />
-        <strong>hermes-control.ts</strong>
+        <strong>highbar-router.ts</strong>
       </div>
       <div className="ide-grid">
         <aside className="ide-sidebar">
-          <strong>Requests</strong>
-          <span>REQ-1042</span>
-          <span>REQ-1043</span>
+          <strong>Questions</strong>
+          <span>Q-1042</span>
+          <span>Q-1043</span>
           <span>Approvals</span>
         </aside>
         <section className="ide-pane editor-pane">
           <div className="code-line">
-            <span className="muted">const</span> request = <b>{requestTitle}</b>
+            <span className="muted">const</span> stuckQuestion = <b>{requestTitle}</b>
           </div>
           <div className="code-line">
-            expert.match(<b>{expertName}</b>) <span className="muted">=</span>{" "}
+            human.match(<b>{expertName}</b>) <span className="muted">=</span>{" "}
             <b>{matchScore}/100</b>
           </div>
           <div className="code-line">
-            payout.queue <span className="muted">=</span> {money.format(payoutTotal)}
+            earnings.queue <span className="muted">=</span> {money.format(payoutTotal)}
           </div>
           <div className="agent-result">
             <Sparkles size={16} />
-            Draft outreach prepared. Human send required.
+            Human answer requested. Payment requires approval.
           </div>
         </section>
         <aside className="ide-pane chat-pane">
-          <strong>Hermes</strong>
-          <p>Ranked candidates are ready. No external message or payout will execute without approval.</p>
+          <strong>High Bar</strong>
+          <p>Matched experts are ready. No answer request or payout executes without review.</p>
           <div className="mini-checks">
             <span>
               <Check size={14} />
-              Manual LinkedIn send
+              Human answer handoff
             </span>
             <span>
               <Check size={14} />
-              Payout approval gate
+              Earnings approval gate
             </span>
           </div>
         </aside>
         <section className="ide-pane terminal-pane">
           <Code2 size={15} />
-          <code>pnpm build && railway up --detach</code>
+          <code>agent stuck -&gt; human answer -&gt; earnings approved</code>
         </section>
       </div>
     </div>
