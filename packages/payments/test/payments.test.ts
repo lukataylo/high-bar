@@ -5,8 +5,21 @@ import {
   capturePayment,
   refund,
   createPayout,
+  createPayoutOnce,
   PaymentsError,
+  type IdempotencyStore,
 } from "../src/index";
+
+/** In-memory IdempotencyStore standing in for the apps/api DB-backed guard. */
+function memoryStore(): IdempotencyStore {
+  const seen = new Set<string>();
+  return {
+    has: async (key) => seen.has(key),
+    remember: async (key) => {
+      seen.add(key);
+    },
+  };
+}
 
 function fakeStripe(overrides: {
   paymentIntents?: Partial<{
@@ -126,6 +139,63 @@ describe("createPayout", () => {
         idempotencyKey: "",
       }),
     ).rejects.toBeInstanceOf(PaymentsError);
+    expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("createPayoutOnce — store-guarded idempotency", () => {
+  const input = {
+    answerId: "ans_1",
+    expertId: "exp_1",
+    connectedAccountId: "acct_1",
+    amountCents: 4000,
+    idempotencyKey: "idem_dup",
+  };
+
+  it("calling twice with the same idempotency key does NOT double-create", async () => {
+    const create = vi.fn().mockResolvedValue({ id: "tr_1" });
+    const stripe = fakeStripe({ transfers: { create } });
+    const store = memoryStore();
+
+    const first = await createPayoutOnce(stripe, input, store);
+    const second = await createPayoutOnce(stripe, input, store);
+
+    expect(first).toEqual({ kind: "created", transferId: "tr_1", amountCents: 4000 });
+    // Second attempt is recognized as a duplicate WITHOUT issuing a Stripe call.
+    expect(second).toEqual({ kind: "duplicate", idempotencyKey: "idem_dup" });
+    expect(create).toHaveBeenCalledTimes(1);
+
+    // And the idempotency key was forwarded to Stripe on the one real call.
+    const [, options] = create.mock.calls[0] ?? [];
+    expect(options).toEqual({ idempotencyKey: "idem_dup" });
+  });
+
+  it("records the key before the Stripe call (no re-issue after a crash mid-flight)", async () => {
+    const store = memoryStore();
+    const rememberSpy = vi.spyOn(store, "remember");
+    // Simulate Stripe failing AFTER we have recorded the key.
+    const create = vi.fn().mockRejectedValue(new Error("stripe 500"));
+    const stripe = fakeStripe({ transfers: { create } });
+
+    await expect(createPayoutOnce(stripe, input, store)).rejects.toThrow(/stripe 500/);
+    expect(rememberSpy).toHaveBeenCalledTimes(1);
+
+    // A retry now short-circuits to duplicate rather than re-issuing the payout.
+    const retry = await createPayoutOnce(stripe, input, store);
+    expect(retry).toEqual({ kind: "duplicate", idempotencyKey: "idem_dup" });
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+
+  it("throws on a missing idempotency key without touching the store or Stripe", async () => {
+    const create = vi.fn();
+    const stripe = fakeStripe({ transfers: { create } });
+    const store = memoryStore();
+    const hasSpy = vi.spyOn(store, "has");
+
+    await expect(
+      createPayoutOnce(stripe, { ...input, idempotencyKey: "  " }, store),
+    ).rejects.toBeInstanceOf(PaymentsError);
+    expect(hasSpy).not.toHaveBeenCalled();
     expect(create).not.toHaveBeenCalled();
   });
 });

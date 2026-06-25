@@ -3,12 +3,31 @@ import type Stripe from "stripe";
 import {
   mapEventToOutcome,
   verifyWebhookSignature,
+  processWebhookEvent,
   ConfigError,
   type WebhookOutcome,
+  type IdempotencyStore,
 } from "../src/index";
 
 function event(type: string, object: Record<string, unknown>): Stripe.Event {
   return { type, data: { object } } as unknown as Stripe.Event;
+}
+
+/** Event with an id, as Stripe always delivers (the replay-dedupe key). */
+function idEvent(id: string, type: string, object: Record<string, unknown>): Stripe.Event {
+  return { id, type, data: { object } } as unknown as Stripe.Event;
+}
+
+/** In-memory IdempotencyStore standing in for the apps/api DB-backed one. */
+function memoryStore(): IdempotencyStore & { keys: () => string[] } {
+  const seen = new Set<string>();
+  return {
+    has: async (key) => seen.has(key),
+    remember: async (key) => {
+      seen.add(key);
+    },
+    keys: () => [...seen],
+  };
 }
 
 describe("mapEventToOutcome", () => {
@@ -111,5 +130,54 @@ describe("verifyWebhookSignature", () => {
 
     expect(() => verifyWebhookSignature(stripe, "raw-body", "sig-header")).toThrow(ConfigError);
     expect(constructEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("processWebhookEvent — replay protection", () => {
+  it("processes a first-seen event and records its id", async () => {
+    const built = idEvent("evt_1", "payment_intent.succeeded", { id: "pi_1" });
+    const constructEvent = vi.fn().mockReturnValue(built);
+    const stripe = { webhooks: { constructEvent } } as unknown as Stripe;
+    const store = memoryStore();
+
+    const result = await processWebhookEvent(stripe, "raw", "sig", "whsec_test", store);
+
+    expect(result).toEqual({ kind: "payment", stripePaymentIntentId: "pi_1", status: "captured" });
+    expect(store.keys()).toEqual(["stripe_event:evt_1"]);
+  });
+
+  it("treats a REPLAYED event (same id) as a no-op duplicate and emits no transition", async () => {
+    const built = idEvent("evt_dup", "transfer.created", { id: "tr_1" });
+    const constructEvent = vi.fn().mockReturnValue(built);
+    const stripe = { webhooks: { constructEvent } } as unknown as Stripe;
+    const store = memoryStore();
+
+    const first = await processWebhookEvent(stripe, "raw", "sig", "whsec_test", store);
+    const second = await processWebhookEvent(stripe, "raw", "sig", "whsec_test", store);
+
+    expect(first).toEqual({ kind: "payout", stripeTransferId: "tr_1", status: "sent" });
+    // Second delivery of the SAME event id is ignored as a duplicate.
+    expect(second).toEqual({ kind: "ignored", reason: "duplicate" });
+    // The id was recorded exactly once — no double-processing.
+    expect(store.keys()).toEqual(["stripe_event:evt_dup"]);
+  });
+
+  it("rejects a tampered signature and never touches the dedupe store", async () => {
+    const constructEvent = vi.fn().mockImplementation(() => {
+      throw new Error("No signatures found matching the expected signature for payload");
+    });
+    const stripe = { webhooks: { constructEvent } } as unknown as Stripe;
+    const store = memoryStore();
+    const hasSpy = vi.spyOn(store, "has");
+    const rememberSpy = vi.spyOn(store, "remember");
+
+    await expect(
+      processWebhookEvent(stripe, "tampered-body", "forged-sig", "whsec_test", store),
+    ).rejects.toThrow(/signature/i);
+
+    // Verification fails BEFORE any dedupe/record work happens.
+    expect(hasSpy).not.toHaveBeenCalled();
+    expect(rememberSpy).not.toHaveBeenCalled();
+    expect(store.keys()).toEqual([]);
   });
 });

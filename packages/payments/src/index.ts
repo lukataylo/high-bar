@@ -26,12 +26,14 @@ export {
   createExpertConnectAccount,
   createAccountOnboardingLink,
   createPayout,
+  createPayoutOnce,
 } from "./connect";
 export type {
   CreateExpertConnectAccountInput,
   CreateAccountOnboardingLinkInput,
   CreatePayoutInput,
   CreatedPayout,
+  PayoutAttempt,
 } from "./connect";
 
 // Payout guardrails
@@ -43,12 +45,13 @@ export type {
   ExpertEligibility,
   ExpertEligibilityPort,
   PayoutTotalsPort,
+  DailyReservation,
   IdempotencyStore,
 } from "./ports";
 
 // Webhooks
-export { verifyWebhookSignature, mapEventToOutcome } from "./webhooks";
-export type { WebhookOutcome } from "./webhooks";
+export { verifyWebhookSignature, mapEventToOutcome, processWebhookEvent } from "./webhooks";
+export type { WebhookOutcome, DuplicateWebhookOutcome, ProcessWebhookResult } from "./webhooks";
 
 // Errors
 export {

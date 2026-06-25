@@ -133,3 +133,123 @@ describe("PayoutPolicyEngine", () => {
     expect(decision.reason).toMatch(/auto-approved/i);
   });
 });
+
+describe("PayoutPolicyEngine — fail-closed on port failure", () => {
+  it("DENIES (never allows) when the eligibility store throws", async () => {
+    const engine = new PayoutPolicyEngine({
+      eligibility: {
+        getEligibility: async () => {
+          throw new Error("connection refused: postgres://user:secret@db:5432");
+        },
+      },
+      totals: totalsPort(0),
+      config: config(),
+    });
+    const decision = await engine.evaluate(payout(50_00));
+    expect(decision.allowed).toBe(false);
+    expect(decision.requiresHumanApproval).toBe(false);
+    expect(decision.reason).toBe("fail-closed: eligibility store unavailable");
+    // The underlying error (which carries a connection string) must NOT leak.
+    expect(decision.reason).not.toMatch(/secret|postgres|connection/i);
+  });
+
+  it("DENIES (never allows) when the totals store throws (sentTodayCents)", async () => {
+    const engine = new PayoutPolicyEngine({
+      eligibility: eligibilityPort(ELIGIBLE),
+      totals: {
+        sentTodayCents: async () => {
+          throw new Error("redis timeout 10.0.0.5");
+        },
+      },
+      config: config(),
+    });
+    const decision = await engine.evaluate(payout(50_00));
+    expect(decision.allowed).toBe(false);
+    expect(decision.requiresHumanApproval).toBe(false);
+    expect(decision.reason).toBe("fail-closed: totals store unavailable");
+    expect(decision.reason).not.toMatch(/redis|10\.0\.0/i);
+  });
+
+  it("DENIES when the atomic reserveDailyAmount throws", async () => {
+    const engine = new PayoutPolicyEngine({
+      eligibility: eligibilityPort(ELIGIBLE),
+      totals: {
+        sentTodayCents: async () => 0,
+        reserveDailyAmount: async () => {
+          throw new Error("deadlock detected");
+        },
+      },
+      config: config(),
+    });
+    const decision = await engine.evaluate(payout(50_00));
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toBe("fail-closed: totals store unavailable");
+  });
+});
+
+describe("PayoutPolicyEngine — deny-by-default", () => {
+  it("denies an unknown/unsupported action type", async () => {
+    const engine = makeEngine({});
+    // Simulate a future/unknown action the engine has no rule for.
+    const unknownAction = { type: "wire.transfer", amountCents: 10_00 } as unknown as ProposedAction;
+    const decision = await engine.evaluate(unknownAction);
+    expect(decision.allowed).toBe(false);
+    expect(decision.requiresHumanApproval).toBe(false);
+  });
+
+  it("denies a suspended expert (status not vetted)", async () => {
+    const engine = makeEngine({ eligibility: { ...ELIGIBLE, status: "suspended" } });
+    const decision = await engine.evaluate(payout(50_00));
+    expect(decision.allowed).toBe(false);
+  });
+
+  it("denies when the connected account id is blank whitespace", async () => {
+    const engine = makeEngine({ eligibility: { ...ELIGIBLE, stripeConnectAccountId: "   " } });
+    const decision = await engine.evaluate(payout(50_00));
+    expect(decision.allowed).toBe(false);
+    expect(decision.reason).toMatch(/no connected payout account/i);
+  });
+});
+
+describe("PayoutPolicyEngine — daily-cap concurrency via atomic reserve", () => {
+  /**
+   * Stateful fake of an ATOMIC reserveDailyAmount: it only advances the running
+   * total when the amount fits under the cap, exactly as a DB-level
+   * `UPDATE ... WHERE total + :amt <= :cap` would. This models the apps/api
+   * contract and lets us assert the cap can never be busted.
+   */
+  function reservingTotalsPort(start: number): PayoutTotalsPort & { runningTotal: () => number } {
+    let total = start;
+    return {
+      sentTodayCents: async () => total,
+      runningTotal: () => total,
+      reserveDailyAmount: async (amountCents: number, dailyCapCents: number) => {
+        if (total + amountCents > dailyCapCents) {
+          return { reserved: false, sentTodayCents: total };
+        }
+        total += amountCents;
+        return { reserved: true, sentTodayCents: total };
+      },
+    };
+  }
+
+  it("denies the second of two near-simultaneous payouts once the cap is reached", async () => {
+    const totals = reservingTotalsPort(0);
+    const engine = new PayoutPolicyEngine({
+      eligibility: eligibilityPort(ELIGIBLE),
+      totals,
+      // Cap fits exactly one 60_00 payout; a second would bust it.
+      config: config({ dailyCapCents: 100_00, approvalThresholdCents: 100_00 }),
+    });
+
+    const first = await engine.evaluate(payout(60_00));
+    const second = await engine.evaluate(payout(60_00));
+
+    expect(first.allowed).toBe(true);
+    expect(second.allowed).toBe(false);
+    expect(second.reason).toMatch(/daily payout cap exceeded/i);
+    // The atomic reserve never advanced the total past the cap.
+    expect(totals.runningTotal()).toBe(60_00);
+    expect(totals.runningTotal()).toBeLessThanOrEqual(100_00);
+  });
+});

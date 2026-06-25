@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { z } from "zod";
 import { InvalidInputError, PaymentsError } from "./errors";
+import type { IdempotencyStore } from "./ports";
 
 const currencySchema = z
   .string()
@@ -105,4 +106,51 @@ export async function createPayout(stripe: Stripe, input: CreatePayoutInput): Pr
   );
 
   return { transferId: transfer.id, amountCents };
+}
+
+/** Result of a store-guarded payout attempt. */
+export type PayoutAttempt =
+  | { kind: "created"; transferId: string; amountCents: number }
+  | { kind: "duplicate"; idempotencyKey: string };
+
+function payoutDedupeKey(idempotencyKey: string): string {
+  return `payout:${idempotencyKey}`;
+}
+
+/**
+ * Defense-in-depth wrapper around {@link createPayout}. Stripe's idempotency key
+ * already de-duplicates retries on Stripe's side, but a local IdempotencyStore
+ * guard means we never even ISSUE a second money-moving call for an id we have
+ * already acted on — closing the window where a retry races before Stripe has
+ * recorded the first request.
+ *
+ * Sequence is deliberately check -> record -> call:
+ *   - a previously-seen key returns `{ kind: "duplicate" }` WITHOUT touching
+ *     Stripe (no double-create);
+ *   - the key is recorded BEFORE the Stripe call so a crash mid-flight does not
+ *     re-issue. The Stripe idempotencyKey is still forwarded, so even if a
+ *     duplicate slips past the local guard, Stripe returns the original
+ *     transfer rather than creating a second one.
+ *
+ * SECURITY: the store records only the opaque idempotency key — no amounts,
+ * account ids, or other PII.
+ */
+export async function createPayoutOnce(
+  stripe: Stripe,
+  input: CreatePayoutInput,
+  store: IdempotencyStore,
+): Promise<PayoutAttempt> {
+  const key = (input as { idempotencyKey?: unknown }).idempotencyKey;
+  if (typeof key !== "string" || key.trim() === "") {
+    throw new PaymentsError("missing_idempotency_key", "createPayoutOnce requires a non-empty idempotencyKey");
+  }
+
+  const dedupeKey = payoutDedupeKey(key.trim());
+  if (await store.has(dedupeKey)) {
+    return { kind: "duplicate", idempotencyKey: key.trim() };
+  }
+  await store.remember(dedupeKey);
+
+  const created = await createPayout(stripe, input);
+  return { kind: "created", transferId: created.transferId, amountCents: created.amountCents };
 }

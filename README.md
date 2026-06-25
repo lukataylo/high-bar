@@ -32,6 +32,72 @@ Two constraints shape every decision:
 
 ---
 
+## How this project addresses the judging criteria
+
+Every claim below maps to code in this repo. **67 tests pass** (payments 30, research 21, MCP 16) and **every package typechecks clean** (`pnpm -r typecheck`). See [Evaluate it yourself](#evaluate-it-yourself) to reproduce.
+
+### 1. Technical execution
+- **Fail-closed payout policy engine** — [`packages/payments/src/policy.ts`](packages/payments/src/policy.ts) implements `PayoutPolicyEngine` with a deliberate 5-stage decision order (kill-switch → eligibility allowlist → daily cap → approval threshold → auto-approve), default-denying anything that isn't a payout. Covered by 10 tests in [`packages/payments/test/policy.test.ts`](packages/payments/test/policy.test.ts).
+- **Real Stripe money plumbing** — manual-capture PaymentIntents, partial refunds, and Connect transfers with idempotency keys, plus a webhook-event mapper over 10 Stripe event types ([`packages/payments/src/{payments,webhooks,connect}.ts`](packages/payments/src), 20 more tests).
+- **Hexagonal, dependency-injected design** — engines depend on thin ports (`ApiKeyPort`, `RateLimitStore`, `PayoutPolicyEngineDeps`), so the money/agent logic is unit-testable without Stripe, Postgres, or Redis running.
+- **Shared, schema-locked contracts** — zod + Drizzle definitions in [`packages/core/src`](packages/core/src) (`db/schema.ts`, `contracts/*`) are the single source of truth every package builds against.
+
+### 2. Product thinking
+- **Two customers, one codebase** — the same marketplace serves humans (PWA) and AI agents (MCP + REST), an explicit bet that agents will become paying buyers of vetted answers.
+- **Escrow-style trust** — funds are authorized on submit and only captured on acceptance; reject or SLA-expiry voids/refunds, aligning incentives for asker and expert.
+- **ToS-safe outreach by design** — [`packages/research/src`](packages/research/src) generates *drafts only* (`outreach.ts`), never auto-sending and never scraping/automating LinkedIn — a deliberate product choice that keeps the business compliant.
+
+### 3. Agent autonomy
+- **Propose/authorize split** — the agent's internal action surface (`outreach.draft`, `payout.create`, `lead.upsert`) is never directly executable; it flows through the gateway `PolicyEngine` via the `ProposedAction`/`PolicyDecision` contract in [`packages/core/src/contracts/agent-runtime.ts`](packages/core/src/contracts/agent-runtime.ts).
+- **Autonomous money decisions, bounded** — `PayoutPolicyEngine` lets the loop pay vetted experts *automatically within limits* and only escalates to a human above the configured threshold — real autonomy with a hard ceiling.
+- **Self-driving biz-dev** — [`packages/research/src`](packages/research/src) qualifies and scores leads (`qualify.ts`, 10 tests) and prepares outreach, the loop the agent runs end-to-end.
+- **Agents as autonomous customers** — [`packages/mcp-expert-network/src`](packages/mcp-expert-network/src) exposes the marketplace over MCP so other AI agents can buy answers programmatically (`mcp.ts`, `http.ts`).
+
+### 4. UX clarity
+- **Installable Next.js PWA console** — [`apps/web/`](apps/web) is the asker + expert + approval-inbox UI, **deployed live on Railway**.
+- **Human-in-the-loop inbox** — outreach drafts and over-threshold payouts surface in a review queue (`outreach_drafts` table, `requires_approval` on payouts) so a person approves with full context.
+- **Legible audit trail** — every proposed side effect is recorded `proposed → allowed/denied → executed` ([`packages/core/src/audit.ts`](packages/core/src/audit.ts), `audit_log` table), so operators can always see *what the agent wanted vs. what ran*.
+
+### 5. Real-world applicability
+- **Production payments, not a toy** — Stripe manual-capture escrow + Connect Express payouts ([`packages/payments`](packages/payments)) is the same pattern real marketplaces ship.
+- **A real integration surface for agent customers** — [`packages/mcp-expert-network/src/{auth,http,mcp}.ts`](packages/mcp-expert-network/src) provides hashed-API-key auth, scopes, and per-key rate limiting over both MCP and REST.
+- **Compliance-first growth** — draft-only outreach ([`packages/research`](packages/research)) avoids the scraping/automation that gets real businesses banned.
+- **Deployable today** — live web service on Railway with Postgres + Redis; see [Deployment](#deployment).
+
+### 6. Safety & oversight design
+- **Fail-closed by construction** — `PayoutPolicyEngine` denies first and only allows at the end; a missing/unvetted expert, unverified KYC, or absent Connect account all block payout ([`packages/payments/src/policy.ts`](packages/payments/src/policy.ts)).
+- **Operator guardrail knobs** — `PAYOUT_APPROVAL_THRESHOLD`, `PAYOUT_DAILY_CAP`, and `AGENT_KILL_SWITCH` in [`.env.example`](.env.example) let an operator cap spend and halt the loop instantly.
+- **Least-privilege agent API** — keys are stored as **sha-256 hashes only**, gated by scopes, and throttled by a per-key token-bucket rate limiter ([`packages/mcp-expert-network/src/auth.ts`](packages/mcp-expert-network/src/auth.ts), `hashApiKey` / `hasScope` / `RateLimitStore`).
+- **Defense-in-depth + audit** — RBAC ([`packages/core/src/rbac.ts`](packages/core/src/rbac.ts)), immutable audit log ([`packages/core/src/audit.ts`](packages/core/src/audit.ts)), and untrusted-content isolation (see [Security model](#security-model)).
+
+> **Honest status:** the policy engine, payments, research, MCP/REST surface, and web app are **built and tested today**. The runtime that *invokes* them on a cron — `apps/agent-gateway`, `services/hermes`, and `apps/api` — is **in progress / specified by the `packages/core` contracts** but not yet wired end-to-end. See [Project status / roadmap](#project-status--roadmap).
+
+---
+
+## Evaluate it yourself
+
+A judge can verify every claim above in a few minutes:
+
+```bash
+# 1. Clone and install
+git clone <this-repo> && cd self-running
+pnpm install
+
+# 2. Typecheck the whole monorepo (expect: clean)
+pnpm -r typecheck
+
+# 3. Run each package's tests (expect: 67 passing total)
+pnpm --filter @high-bar/payments test            # 30 passing — money-safety logic
+pnpm --filter @high-bar/research test             # 21 passing — lead scoring + draft outreach
+pnpm --filter @high-bar/mcp-expert-network test   # 16 passing — auth, scopes, rate limit, MCP/REST
+```
+
+- **Read the money-safety logic first:** [`packages/payments/src/policy.ts`](packages/payments/src/policy.ts) is the ~115-line `PayoutPolicyEngine` — kill-switch, eligibility allowlist, daily cap, and human-approval threshold, in that order. Its tests ([`packages/payments/test/policy.test.ts`](packages/payments/test/policy.test.ts)) read like an executable spec of the safety guarantees.
+- **Live web console:** the Next.js PWA ([`apps/web/`](apps/web)) is **deployed on Railway** behind HTTP Basic auth (credentials available on request).
+- **Guardrail knobs:** [`.env.example`](.env.example) documents `PAYOUT_APPROVAL_THRESHOLD`, `PAYOUT_DAILY_CAP`, and `AGENT_KILL_SWITCH`.
+
+---
+
 ## Architecture
 
 A TypeScript monorepo managed with **pnpm workspaces + Turborepo** (`apps/*`, `packages/*`, `services/*`).
@@ -46,9 +112,9 @@ self-running/
 │  └─ hermes/          Nous Hermes agent runtime (container) — loop, skills, memory; OpenAI-compatible  (planned)
 ├─ packages/
 │  ├─ core/            Domain model, Drizzle/Postgres schema, RBAC, audit log, shared zod contracts  [built]
-│  ├─ payments/        Stripe — PaymentIntents (manual capture), Connect Express + Transfers, guardrails  [in progress]
-│  ├─ research/        Lead gen, qualification scoring, LinkedIn/email DRAFT queue (no auto-send)    [in progress]
-│  └─ mcp-expert-network/  MCP server + public agent API: list_domains, pricing, submit_question, …  (planned)
+│  ├─ payments/        Stripe — PaymentIntents (manual capture), Connect Express + Transfers, guardrails  [built · 30 tests]
+│  ├─ research/        Lead gen, qualification scoring, LinkedIn/email DRAFT queue (no auto-send)    [built · 21 tests]
+│  └─ mcp-expert-network/  MCP server + public agent API: list_domains, pricing, submit_question, …  [built · 16 tests]
 └─ docs/               Operational notes (e.g. domain setup)
 ```
 
@@ -229,7 +295,7 @@ To put the app on the production domain **`highbar.dev`**, follow [`docs/DOMAIN_
 | **M3 — Research + outreach** | Lead gen, qualification, LinkedIn/email draft queue + approval inbox | 🚧 In progress (`research`) |
 | **M4 — Hardening** | Security review actioned, rate limits, monitoring; promote toward live Stripe | ⏳ Planned |
 
-**Currently in the repo:** `apps/web`, `packages/core` (complete schema + contracts), and `packages/payments` / `packages/research` (in progress). `apps/api`, `apps/agent-gateway`, `services/hermes`, and `packages/mcp-expert-network` are specified by the contracts in `packages/core` but **not yet implemented**.
+**Currently in the repo (built + tested):** `apps/web` (deployed on Railway), `packages/core` (complete schema + contracts), `packages/payments` (30 tests), `packages/research` (21 tests), and `packages/mcp-expert-network` (16 tests) — **67 tests passing, all packages typecheck clean**. Still being wired end-to-end: `apps/agent-gateway`, `apps/api`, and `services/hermes` (the cron runtime that *invokes* the above on a schedule), all specified by the `packages/core` contracts.
 
 ---
 

@@ -1,6 +1,6 @@
 import type { PolicyEngine, ProposedAction } from "@high-bar/core";
 import { PolicyDecision } from "@high-bar/core";
-import type { ExpertEligibilityPort, PayoutTotalsPort } from "./ports";
+import type { DailyReservation, ExpertEligibility, ExpertEligibilityPort, PayoutTotalsPort } from "./ports";
 import { loadGuardrailConfig, type GuardrailConfig } from "./env";
 
 function usd(cents: number): string {
@@ -54,7 +54,16 @@ export class PayoutPolicyEngine implements PolicyEngine {
     }
 
     // 2. Eligibility allowlist — expert must exist, be vetted, KYC-verified, and have a payout account.
-    const eligibility = await this.eligibility.getEligibility(expertId);
+    // FAIL-CLOSED: if the eligibility store is unavailable or throws, we DENY.
+    // An unknown answer to "is this expert eligible?" is never an authorization.
+    let eligibility: ExpertEligibility | null;
+    try {
+      eligibility = await this.eligibility.getEligibility(expertId);
+    } catch {
+      // Intentionally swallow the underlying error WITHOUT logging it — it may
+      // carry PII/connection strings. Only the stable fail-closed reason leaves.
+      return this.failClosed("eligibility");
+    }
     if (eligibility === null) {
       return this.decision({
         allowed: false,
@@ -88,13 +97,46 @@ export class PayoutPolicyEngine implements PolicyEngine {
     }
 
     // 3. Daily cap — hard ceiling on total agent-initiated payouts per day.
-    const sentTodayCents = await this.totals.sentTodayCents();
-    if (sentTodayCents + amountCents > config.dailyCapCents) {
-      return this.decision({
-        allowed: false,
-        requiresHumanApproval: false,
-        reason: `Daily payout cap exceeded: ${usd(sentTodayCents)} sent + ${usd(amountCents)} requested > ${usd(config.dailyCapCents)} cap.`,
-      });
+    //
+    // RACE WARNING: a naive `read total -> compare -> proceed` is NOT safe under
+    // concurrency. Two payouts evaluated at nearly the same instant can both
+    // read an under-cap total and both pass, busting the cap. When the injected
+    // PayoutTotalsPort exposes an ATOMIC `reserveDailyAmount`, we use it as the
+    // authoritative gate so the reserve-and-compare happens in a single atomic
+    // operation. apps/api MUST back that method with a DB-level atomic counter /
+    // transaction (see ports.ts). The `sentTodayCents()` branch below is a
+    // best-effort fallback and is NOT concurrency-safe on its own.
+    //
+    // FAIL-CLOSED: any error reaching the totals store results in a DENY.
+    const reserve = this.totals.reserveDailyAmount;
+    if (reserve !== undefined) {
+      let reservation: DailyReservation;
+      try {
+        reservation = await reserve.call(this.totals, amountCents, config.dailyCapCents);
+      } catch {
+        return this.failClosed("totals");
+      }
+      if (!reservation.reserved) {
+        return this.decision({
+          allowed: false,
+          requiresHumanApproval: false,
+          reason: `Daily payout cap exceeded: ${usd(reservation.sentTodayCents)} sent + ${usd(amountCents)} requested > ${usd(config.dailyCapCents)} cap.`,
+        });
+      }
+    } else {
+      let sentTodayCents: number;
+      try {
+        sentTodayCents = await this.totals.sentTodayCents();
+      } catch {
+        return this.failClosed("totals");
+      }
+      if (sentTodayCents + amountCents > config.dailyCapCents) {
+        return this.decision({
+          allowed: false,
+          requiresHumanApproval: false,
+          reason: `Daily payout cap exceeded: ${usd(sentTodayCents)} sent + ${usd(amountCents)} requested > ${usd(config.dailyCapCents)} cap.`,
+        });
+      }
     }
 
     // 4. Approval threshold — over-threshold amounts are allowed but gated on human approval.
@@ -111,6 +153,19 @@ export class PayoutPolicyEngine implements PolicyEngine {
       allowed: true,
       requiresHumanApproval: false,
       reason: "Within limits; auto-approved.",
+    });
+  }
+
+  /**
+   * Fail-closed denial used when an injected port throws or is unavailable.
+   * `which` is a fixed, non-sensitive label ("eligibility" | "totals") — we
+   * NEVER include the underlying error, which may carry secrets or PII.
+   */
+  private failClosed(which: "eligibility" | "totals"): PolicyDecision {
+    return this.decision({
+      allowed: false,
+      requiresHumanApproval: false,
+      reason: `fail-closed: ${which} store unavailable`,
     });
   }
 

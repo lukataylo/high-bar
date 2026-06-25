@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import type { PaymentStatus, PayoutStatus } from "@high-bar/core";
 import { loadStripeWebhookSecret } from "./env";
+import type { IdempotencyStore } from "./ports";
 
 /**
  * Typed outcome of a Stripe webhook. This module performs NO database writes —
@@ -10,6 +11,16 @@ export type WebhookOutcome =
   | { kind: "payment"; stripePaymentIntentId: string; status: PaymentStatus }
   | { kind: "payout"; stripeTransferId: string; status: PayoutStatus }
   | { kind: "ignored"; eventType: string };
+
+/** Returned by `processWebhookEvent` when an event id was already processed. */
+export type DuplicateWebhookOutcome = { kind: "ignored"; reason: "duplicate" };
+
+/**
+ * Outcome of the full verify -> dedupe -> map pipeline. A first-seen event maps
+ * to a `WebhookOutcome`; a replayed event (same Stripe `event.id`) short-circuits
+ * to `{ kind: "ignored", reason: "duplicate" }` and emits NO state transition.
+ */
+export type ProcessWebhookResult = WebhookOutcome | DuplicateWebhookOutcome;
 
 /**
  * Verifies a Stripe webhook signature and returns the parsed event. Throws via
@@ -24,6 +35,50 @@ export function verifyWebhookSignature(
 ): Stripe.Event {
   const webhookSecret = secret ?? loadStripeWebhookSecret();
   return stripe.webhooks.constructEvent(rawBody, signatureHeader, webhookSecret);
+}
+
+/** Namespaces the dedupe key so Stripe event ids cannot collide with other keys. */
+function webhookDedupeKey(eventId: string): string {
+  return `stripe_event:${eventId}`;
+}
+
+/**
+ * Full webhook pipeline: verify signature -> dedupe on Stripe `event.id` ->
+ * map to a domain outcome. This is the REPLAY-SAFE entry point apps/api should
+ * use.
+ *
+ * 1. Signature is verified first (via the Stripe SDK). A tampered/forged body or
+ *    signature THROWS before any dedupe or mapping work — nothing is recorded.
+ * 2. The verified `event.id` is checked against the injected IdempotencyStore.
+ *    A previously-seen id returns `{ kind: "ignored", reason: "duplicate" }` and
+ *    does NOT re-emit a state transition (Stripe retries deliver the same id).
+ * 3. First-seen ids are recorded, then mapped to a `WebhookOutcome`.
+ *
+ * SECURITY: no part of the raw body, signature, secret, or event payload is
+ * logged here. The store records only the opaque, namespaced event id.
+ *
+ * NOTE: recording + persisting the mapped outcome should share one DB
+ * transaction in apps/api so an id is only marked processed once its effect is
+ * durably committed (otherwise a crash between record and persist could drop an
+ * event). The store contract here is the dedupe primitive that transaction uses.
+ */
+export async function processWebhookEvent(
+  stripe: Stripe,
+  rawBody: string | Buffer,
+  signatureHeader: string,
+  secret: string | undefined,
+  idempotencyStore: IdempotencyStore,
+): Promise<ProcessWebhookResult> {
+  // Throws on bad/forged signature — fail-closed before any side effect.
+  const verified = verifyWebhookSignature(stripe, rawBody, signatureHeader, secret);
+
+  const dedupeKey = webhookDedupeKey(verified.id);
+  if (await idempotencyStore.has(dedupeKey)) {
+    return { kind: "ignored", reason: "duplicate" };
+  }
+  await idempotencyStore.remember(dedupeKey);
+
+  return mapEventToOutcome(verified);
 }
 
 /** Pulls the PaymentIntent id off a charge/refund-style object. */

@@ -16,6 +16,9 @@ out/
 coverage/
 *.tsbuildinfo
 
+# Local runtime data (autonomous-loop generated; reproducible via `node scripts/autonomous-loop.mjs --seed`)
+data/
+
 # Logs
 *.log
 npm-debug.log*
