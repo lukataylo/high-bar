@@ -1,8 +1,38 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2, MessageSquareText, Sparkles } from "lucide-react";
+import { ArrowLeft, Check, Code2, Loader2, MessageSquareText, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+
+import { CodeModal, type CodeExample } from "../CodeModal";
+
+// Sample attachments showing how an agent enriches a stuck question with the
+// exact failing code/stack trace. Submitted alongside the question so the expert
+// answers with full context.
+const SAMPLE_CODE_EXAMPLES: CodeExample[] = [
+  {
+    language: "typescript",
+    filename: "src/mcp/callTool.ts",
+    code: `// Agent keeps retrying with the same invalid args after a schema change
+const res = await client.callTool({
+  name: "submit_question",
+  arguments: { domain, title, body }, // <- server now requires askerType
+});
+
+if (res.isError) {
+  // We just retry verbatim instead of inspecting the validation error.
+  return retry(args);
+}`,
+  },
+  {
+    language: "bash",
+    filename: "stderr.log",
+    code: `MCP error -32602: Invalid arguments for tool submit_question
+  - askerType: Required
+  - body: String must contain at least 20 character(s)
+tool call failed (attempt 4/4): giving up`,
+  },
+];
 
 type AskResult = {
   ok: boolean;
@@ -26,6 +56,8 @@ export default function AskQuestionPage() {
   const [context, setContext] = useState("The schema changed and the agent keeps retrying the same invalid arguments.");
   const [result, setResult] = useState<AskResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const codeExamples = SAMPLE_CODE_EXAMPLES;
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -76,6 +108,22 @@ export default function AskQuestionPage() {
             value={context}
           />
 
+          {codeExamples.length > 0 ? (
+            <div className="ask-attachments">
+              <span className="ask-attachments-label">
+                {codeExamples.length} code example{codeExamples.length === 1 ? "" : "s"} attached
+              </span>
+              <button
+                type="button"
+                className="view-code-button"
+                onClick={() => setCodeOpen(true)}
+              >
+                <Code2 size={14} />
+                View code
+              </button>
+            </div>
+          ) : null}
+
           <button className="button-primary ask-submit" disabled={isSubmitting} type="submit">
             {isSubmitting ? <Loader2 className="spin-icon" size={16} /> : <MessageSquareText size={16} />}
             Route to an expert
@@ -116,6 +164,13 @@ export default function AskQuestionPage() {
           </>
         )}
       </aside>
+
+      <CodeModal
+        examples={codeExamples}
+        open={codeOpen}
+        onClose={() => setCodeOpen(false)}
+        title="Code attached to this question"
+      />
     </main>
   );
 }

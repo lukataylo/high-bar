@@ -104,7 +104,7 @@ const QA_CARDS: QA[] = [
 ];
 
 const CURL_COMMAND =
-  'curl -s "https://highbar.dev/api/ask?question=YOUR_QUESTION"';
+  'curl -s "https://highbar.dev/api/submit?question=YOUR_QUESTION"';
 
 const JSON_SNIPPET = `{
   "ok": true,

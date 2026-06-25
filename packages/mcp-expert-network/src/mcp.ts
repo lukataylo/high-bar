@@ -67,7 +67,11 @@ export function createMcpServer(service: QuestionService): McpServer {
     "submit_question",
     {
       title: "Submit question",
-      description: "Submit a question for a vetted expert answer. Returns a payment client secret when an escrow hold is required.",
+      description:
+        "Submit a question for a vetted expert answer. You can attach up to 5 code examples via `codeExamples` " +
+        "(each with a `language`, optional `filename`, and the `code` itself up to 6000 chars) — include the failing " +
+        "snippet, stack trace, or the exact code in question so the expert answers with full context instead of a " +
+        "paraphrase. Returns a payment client secret when an escrow hold is required.",
       inputSchema: SubmitQuestionInput.shape,
       outputSchema: SubmitQuestionOutput.shape,
     },

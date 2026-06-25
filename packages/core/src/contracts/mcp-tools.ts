@@ -19,12 +19,33 @@ export const PricingOutput = z.object({
   slaHours: z.number().int().positive(),
 });
 
+/**
+ * A single attached code example: a stack trace, a failing snippet, or the code
+ * under question. Agents are encouraged to attach these so the expert has the
+ * exact context instead of a paraphrase.
+ */
+export const CodeExample = z.object({
+  /** Language hint for display/highlighting, e.g. "typescript", "python", "bash". */
+  language: z.string().min(1).max(40),
+  /** Optional source path, e.g. "src/auth/verifySession.ts". */
+  filename: z.string().max(200).optional(),
+  /** The code or stack trace itself. Capped to keep payloads reasonable. */
+  code: z.string().min(1).max(6000),
+});
+export type CodeExample = z.infer<typeof CodeExample>;
+
 export const SubmitQuestionInput = z.object({
   domain: Domain,
   title: z.string().min(8).max(160),
   body: z.string().min(20).max(8000),
   askerType: AskerType.default("agent"),
   slaHours: z.number().int().min(1).max(168).optional(),
+  /**
+   * Optional code examples (stack traces, failing snippets, the code in
+   * question). Attaching these gives the expert exact context and yields a
+   * sharper answer. Up to 5 examples, each up to 6000 characters.
+   */
+  codeExamples: z.array(CodeExample).max(5).optional(),
 });
 export const SubmitQuestionOutput = z.object({
   questionId: z.string().uuid(),
@@ -40,6 +61,8 @@ export const QuestionStatusOutput = z.object({
   answer: z
     .object({ body: z.string(), answeredAt: z.string() })
     .nullable(),
+  /** Code examples the asker attached at submission, echoed back for context. */
+  codeExamples: z.array(CodeExample).optional(),
 });
 
 export const MCP_TOOLS = {

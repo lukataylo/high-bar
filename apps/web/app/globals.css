@@ -2409,3 +2409,224 @@ p {
     transform: none;
   }
 }
+
+/* --- Code modal --- */
+.ask-attachments {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--canvas-soft);
+}
+
+.ask-attachments-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.view-code-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 6px;
+  background: var(--surface-card);
+  color: var(--ink);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.view-code-button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.code-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(20, 19, 14, 0.55);
+  backdrop-filter: blur(2px);
+  animation: code-modal-fade 0.14s ease;
+}
+
+@keyframes code-modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.code-modal {
+  width: min(100%, 760px);
+  max-height: min(82vh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #2a2a33;
+  border-radius: 12px;
+  background: #15151b;
+  color: #e7e7ee;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  font-family: "SFMono-Regular", "JetBrains Mono", "Menlo", "Consolas", monospace;
+}
+
+.code-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2a2a33;
+  background: #1b1b22;
+}
+
+.code-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f2f2f7;
+}
+
+.code-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #a8a8b5;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.code-modal-close:hover {
+  background: #26262f;
+  color: #ffffff;
+}
+
+.code-modal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 10px 0;
+  background: #1b1b22;
+}
+
+.code-modal-tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: #9a9aa8;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.code-modal-tab:hover {
+  color: #e7e7ee;
+}
+
+.code-modal-tab.is-active {
+  background: #15151b;
+  border-color: #2a2a33;
+  color: #ffffff;
+}
+
+.code-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #2a2a33;
+  background: #15151b;
+}
+
+.code-modal-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 12px;
+  color: #9a9aa8;
+}
+
+.code-modal-meta code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #cfcfe0;
+}
+
+.code-modal-lang {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #26262f;
+  color: #d68a5c;
+  font-size: 11px;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+.code-modal-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #2f2f3a;
+  border-radius: 6px;
+  background: #20202a;
+  color: #e7e7ee;
+  padding: 5px 10px;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.code-modal-copy:hover {
+  border-color: #4a4a5a;
+  background: #26262f;
+}
+
+.code-modal-pre {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  flex: 1;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #e7e7ee;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.code-modal-pre code {
+  font-family: inherit;
+  background: transparent;
+  color: inherit;
+}
+
+@media (max-width: 720px) {
+  .code-modal {
+    max-height: 88vh;
+  }
+}

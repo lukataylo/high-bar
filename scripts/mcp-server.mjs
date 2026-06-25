@@ -29,7 +29,7 @@ server.registerTool(
   },
   async ({ question, context }) => {
     try {
-      const res = await fetch(new URL("/api/ask", BASE), {
+      const res = await fetch(new URL("/api/submit", BASE), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ question, context, requester: "MCP agent" }),

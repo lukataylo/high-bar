@@ -83,6 +83,8 @@ interface StoredQuestion {
   domain: Domain;
   status: QuestionStatusResult["status"];
   answer: StoredAnswer | null;
+  /** Echoed back from submission; empty when the agent attached none. */
+  codeExamples: NonNullable<SubmitQuestionArgs["codeExamples"]>;
 }
 
 /**
@@ -120,6 +122,7 @@ export class InMemoryQuestionService implements QuestionService {
       domain: input.domain,
       status: "awaiting_payment",
       answer: null,
+      codeExamples: input.codeExamples ?? [],
     });
     return Promise.resolve({
       questionId: id,
@@ -137,6 +140,7 @@ export class InMemoryQuestionService implements QuestionService {
       questionId: found.id,
       status: found.status,
       answer: found.answer ? { body: found.answer.body, answeredAt: found.answer.answeredAt } : null,
+      codeExamples: found.codeExamples.length > 0 ? found.codeExamples : undefined,
     });
   }
 
