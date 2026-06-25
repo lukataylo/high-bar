@@ -19,9 +19,10 @@ coverage/
 # Local runtime data (autonomous-loop generated; reproducible via `node scripts/autonomous-loop.mjs --seed`)
 data/
 
-# Loop-service deploy config — used by `railway up` for the agent-loop service only.
-# Kept untracked so the GitHub-sourced web service never picks it up.
-railway.json
+# NOTE: railway.json (the agent-loop start command) is intentionally left
+# UNTRACKED but NOT ignored — `railway up` respects .gitignore, so ignoring it
+# would drop it from the loop deploy. Do not `git add` it (it would override the
+# GitHub-sourced web service's build/start config).
 
 # Logs
 *.log
