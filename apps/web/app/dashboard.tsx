@@ -21,10 +21,9 @@ import {
   UsersRound,
   WalletCards
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { buildOutreachDraft, scoreMatch } from "@/lib/agent";
-import { experts, payoutQueue, requests } from "@/lib/data";
-import type { ClientRequest, Expert } from "@/lib/types";
+import { useState } from "react";
+import type { DashboardData, RankedExpert } from "@/lib/view-model";
+import type { ClientRequest, Expert, Payout } from "@/lib/types";
 
 type Tab = "pipeline" | "scout" | "approvals";
 type DashboardGuardrails = {
@@ -40,45 +39,52 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 export function Dashboard({
+  data,
   guardrails,
   renderedAt
 }: {
+  data: DashboardData;
   guardrails: DashboardGuardrails;
   renderedAt: string;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("pipeline");
-  const [selectedRequestId, setSelectedRequestId] = useState(requests[0].id);
-  const [selectedExpertId, setSelectedExpertId] = useState(experts[0].id);
-  const [copied, setCopied] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(
+    data.requests[0]?.id ?? ""
+  );
+  const [selectedExpertId, setSelectedExpertId] = useState(
+    data.experts[0]?.id ?? ""
+  );
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
+    "idle"
+  );
 
   const selectedRequest =
-    requests.find((request) => request.id === selectedRequestId) ?? requests[0];
-
-  const rankedExperts = useMemo(
-    () =>
-      experts
-        .map((expert) => ({
-          ...expert,
-          matchScore: scoreMatch(selectedRequest, expert)
-        }))
-        .sort((a, b) => b.matchScore - a.matchScore),
-    [selectedRequest]
-  );
+    data.requests.find((request) => request.id === selectedRequestId) ??
+    data.requests[0];
+  const rankedExperts =
+    (selectedRequest && data.rankedExpertsByRequest[selectedRequest.id]) ?? [];
 
   const selectedExpert =
     rankedExperts.find((expert) => expert.id === selectedExpertId) ??
     rankedExperts[0];
 
-  const draft = buildOutreachDraft(selectedRequest, selectedExpert);
-  const pendingPayoutTotal = payoutQueue.reduce(
+  const draft =
+    selectedRequest && selectedExpert
+      ? data.outreachDrafts[selectedRequest.id]?.[selectedExpert.id] ?? ""
+      : "";
+  const pendingPayoutTotal = data.payoutQueue.reduce(
     (sum, payout) => sum + payout.amountUsd,
     0
   );
 
   const copyDraft = async () => {
-    await navigator.clipboard.writeText(draft);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1200);
+    try {
+      await navigator.clipboard.writeText(draft);
+      setCopyState("copied");
+    } catch {
+      setCopyState("failed");
+    }
+    window.setTimeout(() => setCopyState("idle"), 1200);
   };
 
   return (
@@ -113,7 +119,105 @@ export function Dashboard({
           />
         </nav>
 
-        <div className="guardrail-panel">
+        <GuardrailPanel guardrails={guardrails} />
+      </aside>
+
+      <section className="workspace">
+        <div className="mobile-guardrails">
+          <GuardrailPanel guardrails={guardrails} />
+        </div>
+
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Live workspace</p>
+            <h1>Hermes control room</h1>
+          </div>
+          <div className="topbar-actions">
+            <span className="sync-pill">
+              <Clock3 size={16} />
+              {renderedAt}
+            </span>
+            <button className="icon-button" type="button" aria-label="Notifications">
+              <Bell size={18} />
+            </button>
+            <button className="primary-action" type="button" disabled>
+              <Sparkles size={17} />
+              Run loop
+            </button>
+          </div>
+        </header>
+
+        <section className="metrics-grid" aria-label="Summary">
+          <Metric
+            icon={<Flame size={20} />}
+            label="Open demand"
+            value={`${data.requests.length}`}
+            caption={`${money.format(data.totalBudgetUsd)} booked budget`}
+          />
+          <Metric
+            icon={<UsersRound size={20} />}
+            label="Expert pool"
+            value={`${data.experts.length}`}
+            caption={`${data.experts.length} vetted operators ready`}
+          />
+          <Metric
+            icon={<MailPlus size={20} />}
+            label="Drafts ready"
+            value={`${data.draftCount}`}
+            caption="LinkedIn send remains manual"
+          />
+          <Metric
+            icon={<WalletCards size={20} />}
+            label="Queued payouts"
+            value={money.format(pendingPayoutTotal)}
+            caption={`${money.format(Math.max(guardrails.dailyCapUsd - pendingPayoutTotal, 0))} cap remaining`}
+          />
+        </section>
+
+        {selectedRequest && activeTab === "pipeline" && (
+          <PipelineView
+            requests={data.requests}
+            selectedRequest={selectedRequest}
+            selectedRequestId={selectedRequestId}
+            onSelectRequest={(id) => {
+              setSelectedRequestId(id);
+              setSelectedExpertId(
+                data.rankedExpertsByRequest[id]?.[0]?.id ?? ""
+              );
+            }}
+            rankedExperts={rankedExperts}
+            onSelectExpert={setSelectedExpertId}
+            selectedExpertId={selectedExpert?.id ?? ""}
+          />
+        )}
+
+        {selectedRequest && selectedExpert && activeTab === "scout" && (
+          <ScoutView
+            selectedRequest={selectedRequest}
+            selectedExpert={selectedExpert}
+            rankedExperts={rankedExperts}
+            draft={draft}
+            copyState={copyState}
+            onCopy={copyDraft}
+            onSelectExpert={setSelectedExpertId}
+          />
+        )}
+
+        {activeTab === "approvals" && (
+          <ApprovalsView
+            payoutQueue={data.payoutQueue}
+            approvalThresholdUsd={guardrails.approvalThresholdUsd}
+            killSwitch={guardrails.killSwitch}
+          />
+        )}
+      </section>
+    </main>
+  );
+}
+
+function GuardrailPanel({ guardrails }: { guardrails: DashboardGuardrails }) {
+  return (
+    <div className="guardrail-panel">
           <div className="section-label">
             <ShieldCheck size={15} />
             Guardrails
@@ -134,90 +238,6 @@ export function Dashboard({
             tone="good"
           />
         </div>
-      </aside>
-
-      <section className="workspace">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Live workspace</p>
-            <h1>Hermes control room</h1>
-          </div>
-          <div className="topbar-actions">
-            <span className="sync-pill">
-              <Clock3 size={16} />
-              {renderedAt}
-            </span>
-            <button className="icon-button" aria-label="Notifications">
-              <Bell size={18} />
-            </button>
-            <button className="primary-action">
-              <Sparkles size={17} />
-              Run loop
-            </button>
-          </div>
-        </header>
-
-        <section className="metrics-grid" aria-label="Summary">
-          <Metric
-            icon={<Flame size={20} />}
-            label="Open demand"
-            value={`${requests.length}`}
-            caption={`${money.format(requests.reduce((sum, request) => sum + request.budgetUsd, 0))} booked budget`}
-          />
-          <Metric
-            icon={<UsersRound size={20} />}
-            label="Expert pool"
-            value={`${experts.length}`}
-            caption="4 vetted operators ready"
-          />
-          <Metric
-            icon={<MailPlus size={20} />}
-            label="Drafts ready"
-            value="3"
-            caption="LinkedIn send remains manual"
-          />
-          <Metric
-            icon={<WalletCards size={20} />}
-            label="Queued payouts"
-            value={money.format(pendingPayoutTotal)}
-            caption={`${money.format(Math.max(guardrails.dailyCapUsd - pendingPayoutTotal, 0))} cap remaining`}
-          />
-        </section>
-
-        {activeTab === "pipeline" && (
-          <PipelineView
-            selectedRequest={selectedRequest}
-            selectedRequestId={selectedRequestId}
-            onSelectRequest={(id) => {
-              setSelectedRequestId(id);
-              setSelectedExpertId(experts[0].id);
-            }}
-            rankedExperts={rankedExperts}
-            onSelectExpert={setSelectedExpertId}
-            selectedExpertId={selectedExpert.id}
-          />
-        )}
-
-        {activeTab === "scout" && (
-          <ScoutView
-            selectedRequest={selectedRequest}
-            selectedExpert={selectedExpert}
-            rankedExperts={rankedExperts}
-            draft={draft}
-            copied={copied}
-            onCopy={copyDraft}
-            onSelectExpert={setSelectedExpertId}
-          />
-        )}
-
-        {activeTab === "approvals" && (
-          <ApprovalsView
-            approvalThresholdUsd={guardrails.approvalThresholdUsd}
-            killSwitch={guardrails.killSwitch}
-          />
-        )}
-      </section>
-    </main>
   );
 }
 
@@ -233,7 +253,13 @@ function TabButton({
   onClick: () => void;
 }) {
   return (
-    <button className={`nav-button ${active ? "active" : ""}`} onClick={onClick}>
+    <button
+      aria-current={active ? "page" : undefined}
+      aria-label={label}
+      className={`nav-button ${active ? "active" : ""}`}
+      onClick={onClick}
+      type="button"
+    >
       {icon}
       <span>{label}</span>
     </button>
@@ -281,6 +307,7 @@ function Metric({
 }
 
 function PipelineView({
+  requests,
   selectedRequest,
   selectedRequestId,
   onSelectRequest,
@@ -288,10 +315,11 @@ function PipelineView({
   onSelectExpert,
   selectedExpertId
 }: {
+  requests: ClientRequest[];
   selectedRequest: ClientRequest;
   selectedRequestId: string;
   onSelectRequest: (id: string) => void;
-  rankedExperts: Array<Expert & { matchScore: number }>;
+  rankedExperts: RankedExpert[];
   onSelectExpert: (id: string) => void;
   selectedExpertId: string;
 }) {
@@ -303,7 +331,7 @@ function PipelineView({
             <p className="eyebrow">Demand</p>
             <h2>Client requests</h2>
           </div>
-          <button className="secondary-action">
+          <button className="secondary-action" type="button" disabled>
             <ArrowRight size={16} />
             Intake
           </button>
@@ -313,8 +341,10 @@ function PipelineView({
           {requests.map((request) => (
             <button
               key={request.id}
+              aria-pressed={selectedRequestId === request.id}
               className={`request-row ${selectedRequestId === request.id ? "active" : ""}`}
               onClick={() => onSelectRequest(request.id)}
+              type="button"
             >
               <div>
                 <span className="ticket">{request.id}</span>
@@ -343,8 +373,10 @@ function PipelineView({
           {rankedExperts.map((expert) => (
             <button
               key={expert.id}
+              aria-pressed={selectedExpertId === expert.id}
               className={`expert-row ${selectedExpertId === expert.id ? "active" : ""}`}
               onClick={() => onSelectExpert(expert.id)}
+              type="button"
             >
               <div className="avatar">{expert.name.slice(0, 2)}</div>
               <div>
@@ -372,15 +404,15 @@ function ScoutView({
   selectedExpert,
   rankedExperts,
   draft,
-  copied,
+  copyState,
   onCopy,
   onSelectExpert
 }: {
   selectedRequest: ClientRequest;
-  selectedExpert: Expert & { matchScore: number };
-  rankedExperts: Array<Expert & { matchScore: number }>;
+  selectedExpert: RankedExpert;
+  rankedExperts: RankedExpert[];
   draft: string;
-  copied: boolean;
+  copyState: "idle" | "copied" | "failed";
   onCopy: () => void;
   onSelectExpert: (id: string) => void;
 }) {
@@ -398,8 +430,10 @@ function ScoutView({
           {rankedExperts.map((expert) => (
             <button
               key={expert.id}
+              aria-pressed={selectedExpert.id === expert.id}
               className={`expert-row ${selectedExpert.id === expert.id ? "active" : ""}`}
               onClick={() => onSelectExpert(expert.id)}
+              type="button"
             >
               <div className="avatar">{expert.name.slice(0, 2)}</div>
               <div>
@@ -435,11 +469,15 @@ function ScoutView({
           </div>
           <textarea value={draft} readOnly aria-label="Outreach draft" />
           <div className="draft-actions">
-            <button className="secondary-action" onClick={onCopy}>
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-              {copied ? "Copied" : "Copy"}
+            <button className="secondary-action" onClick={onCopy} type="button">
+              {copyState === "copied" ? <Check size={16} /> : <Copy size={16} />}
+              {copyState === "failed"
+                ? "Copy failed"
+                : copyState === "copied"
+                  ? "Copied"
+                  : "Copy"}
             </button>
-            <button className="primary-action">
+            <button className="primary-action" type="button" disabled>
               <Send size={16} />
               Mark queued
             </button>
@@ -451,9 +489,11 @@ function ScoutView({
 }
 
 function ApprovalsView({
+  payoutQueue,
   approvalThresholdUsd,
   killSwitch
 }: {
+  payoutQueue: Payout[];
   approvalThresholdUsd: number;
   killSwitch: boolean;
 }) {
@@ -491,6 +531,8 @@ function ApprovalsView({
                   <b>{money.format(payout.amountUsd)}</b>
                   <button
                     className={needsApproval ? "secondary-action" : "primary-action"}
+                    disabled
+                    type="button"
                   >
                     {needsApproval ? "Review" : "Release"}
                   </button>

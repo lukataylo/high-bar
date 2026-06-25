@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
-import { getGuardrails } from "@/lib/config";
+import { getPublicGuardrails } from "@/lib/config";
 import { payoutQueue } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const guardrails = getGuardrails();
+  const guardrails = getPublicGuardrails();
 
   return NextResponse.json({
     guardrails,
@@ -17,5 +19,7 @@ export async function GET() {
         payoutQueue.reduce((total, payout) => total + payout.amountUsd, 0),
       0
     )
+  }, {
+    headers: { "Cache-Control": "no-store" }
   });
 }

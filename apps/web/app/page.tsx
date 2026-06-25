@@ -1,5 +1,8 @@
 import { Dashboard } from "./dashboard";
-import { getGuardrails } from "@/lib/config";
+import { getPublicGuardrails } from "@/lib/config";
+import { getDashboardData } from "@/lib/view-model";
+
+export const dynamic = "force-dynamic";
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "2-digit",
@@ -11,7 +14,8 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", {
 export default function Home() {
   return (
     <Dashboard
-      guardrails={getGuardrails()}
+      data={getDashboardData()}
+      guardrails={getPublicGuardrails()}
       renderedAt={dateFormatter.format(new Date())}
     />
   );

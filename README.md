@@ -25,6 +25,8 @@ pnpm build
 - `/api/agent` - returns the first sample request, ranked experts, and draft-only LinkedIn outreach recommendations.
 - `/api/payouts` - returns sample payout queue data with approval, daily cap, and kill-switch guardrail state.
 
+When `AUTH_SECRET` is set, the dashboard and API routes require either browser basic auth with username `highbar` and password set to `AUTH_SECRET`, or API header `Authorization: Bearer <AUTH_SECRET>`.
+
 ## Environment Variables
 
 Copy `.env.example` to `.env` and fill in real values as needed:
@@ -52,13 +54,14 @@ Copy `.env.example` to `.env` and fill in real values as needed:
 - `AGENT_KILL_SWITCH=true` marks payout activity as halted.
 - PayPal is documented for sandbox-first operation.
 - Model, database, and Redis configuration are detected from env, but the MVP still runs on local sample data.
+- Production fails closed if `AUTH_SECRET` is missing; local development can run without it.
 
 ## Stubbed For Now
 
 - No real PayPal payout execution or webhook handling.
 - No persisted database or Redis-backed job queue.
 - No live model call in the agent route.
-- No authentication or user/session enforcement.
+- No full user/session system beyond the MVP basic/Bearer auth gate.
 - No automated LinkedIn sending.
 - Dashboard actions such as Run loop, Mark queued, Review, and Release are UI-only.
 - Sample requests, experts, and payouts are hard-coded in `apps/web/lib/data.ts`.
