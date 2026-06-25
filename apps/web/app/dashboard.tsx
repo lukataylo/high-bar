@@ -1,31 +1,25 @@
 "use client";
 
 import {
-  AlertTriangle,
   ArrowRight,
-  BadgeDollarSign,
-  Bell,
+  BadgeCheck,
   Check,
-  ClipboardCheck,
-  Clock3,
-  Copy,
-  Flame,
-  Gauge,
-  Lock,
+  ClipboardList,
+  Code2,
+  Command,
+  Database,
+  LockKeyhole,
   MailPlus,
-  PauseCircle,
+  Menu,
   Search,
-  Send,
   ShieldCheck,
   Sparkles,
-  UsersRound,
-  WalletCards
+  WalletCards,
+  X
 } from "lucide-react";
 import { useState } from "react";
-import type { DashboardData, RankedExpert } from "@/lib/view-model";
-import type { ClientRequest, Expert, Payout } from "@/lib/types";
+import type { DashboardData } from "@/lib/view-model";
 
-type Tab = "pipeline" | "scout" | "approvals";
 type DashboardGuardrails = {
   approvalThresholdUsd: number;
   dailyCapUsd: number;
@@ -38,544 +32,302 @@ const money = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
 });
 
+const timeline = [
+  ["Thinking", "Understand diligence scope and constraints"],
+  ["Reading", "Review expert graph and prior call notes"],
+  ["Grepping", "Find operators with matching scars"],
+  ["Editing", "Draft compliant manual outreach"],
+  ["Done", "Queue approvals without moving money"]
+] as const;
+
 export function Dashboard({
   data,
-  guardrails,
-  renderedAt
+  guardrails
 }: {
   data: DashboardData;
   guardrails: DashboardGuardrails;
   renderedAt: string;
 }) {
-  const [activeTab, setActiveTab] = useState<Tab>("pipeline");
-  const [selectedRequestId, setSelectedRequestId] = useState(
-    data.requests[0]?.id ?? ""
-  );
-  const [selectedExpertId, setSelectedExpertId] = useState(
-    data.experts[0]?.id ?? ""
-  );
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle"
-  );
-
-  const selectedRequest =
-    data.requests.find((request) => request.id === selectedRequestId) ??
-    data.requests[0];
-  const rankedExperts =
-    (selectedRequest && data.rankedExpertsByRequest[selectedRequest.id]) ?? [];
-
-  const selectedExpert =
-    rankedExperts.find((expert) => expert.id === selectedExpertId) ??
-    rankedExperts[0];
-
-  const draft =
-    selectedRequest && selectedExpert
-      ? data.outreachDrafts[selectedRequest.id]?.[selectedExpert.id] ?? ""
-      : "";
-  const pendingPayoutTotal = data.payoutQueue.reduce(
+  const [menuOpen, setMenuOpen] = useState(false);
+  const firstRequest = data.requests[0];
+  const firstExperts = firstRequest
+    ? data.rankedExpertsByRequest[firstRequest.id] ?? []
+    : [];
+  const payoutTotal = data.payoutQueue.reduce(
     (sum, payout) => sum + payout.amountUsd,
     0
   );
 
-  const copyDraft = async () => {
-    try {
-      await navigator.clipboard.writeText(draft);
-      setCopyState("copied");
-    } catch {
-      setCopyState("failed");
-    }
-    window.setTimeout(() => setCopyState("idle"), 1200);
-  };
-
   return (
-    <main className="app-shell">
-      <aside className="sidebar">
-        <div className="brand-lockup">
-          <div className="brand-mark">HB</div>
-          <div>
-            <strong>High Bar</strong>
-            <span>Expert network ops</span>
-          </div>
-        </div>
+    <main className="site-shell">
+      <header className="top-nav">
+        <a className="wordmark" href="#top" aria-label="High Bar home">
+          <Command size={18} />
+          <span>High Bar</span>
+        </a>
 
-        <nav className="nav-list" aria-label="Primary">
-          <TabButton
-            active={activeTab === "pipeline"}
-            icon={<Gauge size={18} />}
-            label="Pipeline"
-            onClick={() => setActiveTab("pipeline")}
-          />
-          <TabButton
-            active={activeTab === "scout"}
-            icon={<Search size={18} />}
-            label="Scout"
-            onClick={() => setActiveTab("scout")}
-          />
-          <TabButton
-            active={activeTab === "approvals"}
-            icon={<ClipboardCheck size={18} />}
-            label="Approvals"
-            onClick={() => setActiveTab("approvals")}
-          />
+        <nav className={menuOpen ? "nav-links open" : "nav-links"} aria-label="Primary">
+          <a href="#product">Product</a>
+          <a href="#workflow">Workflow</a>
+          <a href="#guardrails">Guardrails</a>
+          <a href="#launch">Launch</a>
         </nav>
 
-        <GuardrailPanel guardrails={guardrails} />
-      </aside>
+        <div className="nav-actions">
+          <a className="text-link" href="/api/agent">
+            API
+          </a>
+          <a className="button-primary" href="#launch">
+            Get live
+          </a>
+          <button
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            className="menu-button"
+            onClick={() => setMenuOpen((open) => !open)}
+            type="button"
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
+      </header>
 
-      <section className="workspace">
-        <div className="mobile-guardrails">
-          <GuardrailPanel guardrails={guardrails} />
+      <section className="hero-band" id="top">
+        <div className="hero-copy">
+          <p className="section-kicker">Expert network operations</p>
+          <h1>AI-assisted diligence calls, without letting the agent touch the wire.</h1>
+          <p>
+            High Bar turns client requests into ranked expert shortlists, manual outreach
+            drafts, and payout approvals. It is built for fast-moving teams who still need a
+            human checkpoint before money or messages leave the system.
+          </p>
+          <div className="hero-actions">
+            <a className="button-download" href="#product">
+              View control room
+              <ArrowRight size={16} />
+            </a>
+            <a className="button-tertiary" href="#guardrails">
+              Read guardrails
+            </a>
+          </div>
         </div>
 
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Live workspace</p>
-            <h1>Hermes control room</h1>
-          </div>
-          <div className="topbar-actions">
-            <span className="sync-pill">
-              <Clock3 size={16} />
-              {renderedAt}
-            </span>
-            <button className="icon-button" type="button" aria-label="Notifications">
-              <Bell size={18} />
-            </button>
-            <button className="primary-action" type="button" disabled>
-              <Sparkles size={17} />
-              Run loop
-            </button>
-          </div>
-        </header>
-
-        <section className="metrics-grid" aria-label="Summary">
-          <Metric
-            icon={<Flame size={20} />}
-            label="Open demand"
-            value={`${data.requests.length}`}
-            caption={`${money.format(data.totalBudgetUsd)} booked budget`}
-          />
-          <Metric
-            icon={<UsersRound size={20} />}
-            label="Expert pool"
-            value={`${data.experts.length}`}
-            caption={`${data.experts.length} vetted operators ready`}
-          />
-          <Metric
-            icon={<MailPlus size={20} />}
-            label="Drafts ready"
-            value={`${data.draftCount}`}
-            caption="LinkedIn send remains manual"
-          />
-          <Metric
-            icon={<WalletCards size={20} />}
-            label="Queued payouts"
-            value={money.format(pendingPayoutTotal)}
-            caption={`${money.format(Math.max(guardrails.dailyCapUsd - pendingPayoutTotal, 0))} cap remaining`}
-          />
-        </section>
-
-        {selectedRequest && activeTab === "pipeline" && (
-          <PipelineView
-            requests={data.requests}
-            selectedRequest={selectedRequest}
-            selectedRequestId={selectedRequestId}
-            onSelectRequest={(id) => {
-              setSelectedRequestId(id);
-              setSelectedExpertId(
-                data.rankedExpertsByRequest[id]?.[0]?.id ?? ""
-              );
-            }}
-            rankedExperts={rankedExperts}
-            onSelectExpert={setSelectedExpertId}
-            selectedExpertId={selectedExpert?.id ?? ""}
-          />
-        )}
-
-        {selectedRequest && selectedExpert && activeTab === "scout" && (
-          <ScoutView
-            selectedRequest={selectedRequest}
-            selectedExpert={selectedExpert}
-            rankedExperts={rankedExperts}
-            draft={draft}
-            copyState={copyState}
-            onCopy={copyDraft}
-            onSelectExpert={setSelectedExpertId}
-          />
-        )}
-
-        {activeTab === "approvals" && (
-          <ApprovalsView
-            payoutQueue={data.payoutQueue}
-            approvalThresholdUsd={guardrails.approvalThresholdUsd}
-            killSwitch={guardrails.killSwitch}
-          />
-        )}
+        <ProductMockup
+          requestTitle={firstRequest?.title ?? "Voice AI diligence"}
+          expertName={firstExperts[0]?.name ?? "Maya Chen"}
+          matchScore={firstExperts[0]?.matchScore ?? 100}
+          payoutTotal={payoutTotal}
+        />
       </section>
+
+      <section className="section-grid metrics-strip" aria-label="Launch metrics">
+        <Metric label="Open demand" value={String(data.requests.length)} />
+        <Metric label="Expert pool" value={String(data.experts.length)} />
+        <Metric label="Drafts ready" value={String(data.draftCount)} />
+        <Metric label="Queued payouts" value={money.format(payoutTotal)} />
+      </section>
+
+      <section className="content-section split-section" id="product">
+        <div>
+          <p className="section-kicker">Product</p>
+          <h2>One calm surface for the messy middle of expert calls.</h2>
+        </div>
+        <div className="feature-grid">
+          <Feature
+            icon={<Search size={18} />}
+            title="Rank the right operators"
+            body="Match client needs against expert tags, availability, confidence, and rate before anyone starts outreach."
+          />
+          <Feature
+            icon={<MailPlus size={18} />}
+            title="Draft-only outreach"
+            body="LinkedIn copy is generated for review. The system never auto-sends social outreach."
+          />
+          <Feature
+            icon={<WalletCards size={18} />}
+            title="Payout queue"
+            body="Every payout is visible with approval thresholds and daily caps surfaced before release."
+          />
+          <Feature
+            icon={<Database size={18} />}
+            title="Ready for persistence"
+            body="Postgres and Redis are provisioned on Railway; the MVP uses seed data until the backed services are wired."
+          />
+        </div>
+      </section>
+
+      <section className="content-section workflow-section" id="workflow">
+        <div className="section-heading">
+          <p className="section-kicker">Agent timeline</p>
+          <h2>AI work is legible before it becomes action.</h2>
+        </div>
+        <div className="timeline-card">
+          {timeline.map(([stage, detail]) => (
+            <div className="timeline-row" key={stage}>
+              <span className={`timeline-pill ${stage.toLowerCase()}`}>{stage}</span>
+              <code>{detail}</code>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="content-section comparison-section" id="guardrails">
+        <div className="comparison-card">
+          <div>
+            <p className="section-kicker">Guardrails</p>
+            <h2>Automation where it helps. Approval where it matters.</h2>
+            <p>
+              The default launch posture is conservative: draft-only outreach, approval
+              thresholds, daily payout caps, and a kill switch visible in the interface.
+            </p>
+          </div>
+          <div className="guardrail-list">
+            <Guardrail
+              icon={<ShieldCheck size={17} />}
+              label="Kill switch"
+              value={guardrails.killSwitch ? "Enabled" : "Off"}
+            />
+            <Guardrail
+              icon={<BadgeCheck size={17} />}
+              label="Approval threshold"
+              value={`${money.format(guardrails.approvalThresholdUsd)}+`}
+            />
+            <Guardrail
+              icon={<LockKeyhole size={17} />}
+              label="Daily cap"
+              value={money.format(guardrails.dailyCapUsd)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="cta-band" id="launch">
+        <p className="section-kicker">Launch build</p>
+        <h2>High Bar is ready for a live demo path.</h2>
+        <p>
+          The current build is public-demo friendly by default. Set
+          <code>AUTH_REQUIRED=true</code> when the team wants to lock it behind Basic or
+          Bearer auth.
+        </p>
+        <a className="button-primary" href="/api/payouts">
+          Inspect payouts API
+        </a>
+      </section>
+
+      <footer className="footer">
+        <div className="wordmark">
+          <Command size={18} />
+          <span>High Bar</span>
+        </div>
+        <span>Expert network operations, built for guarded autonomy.</span>
+      </footer>
     </main>
   );
 }
 
-function GuardrailPanel({ guardrails }: { guardrails: DashboardGuardrails }) {
+function ProductMockup({
+  requestTitle,
+  expertName,
+  matchScore,
+  payoutTotal
+}: {
+  requestTitle: string;
+  expertName: string;
+  matchScore: number;
+  payoutTotal: number;
+}) {
   return (
-    <div className="guardrail-panel">
-          <div className="section-label">
-            <ShieldCheck size={15} />
-            Guardrails
+    <div className="ide-mockup-card" id="product">
+      <div className="ide-toolbar">
+        <span />
+        <span />
+        <span />
+        <strong>hermes-control.ts</strong>
+      </div>
+      <div className="ide-grid">
+        <aside className="ide-sidebar">
+          <strong>Requests</strong>
+          <span>REQ-1042</span>
+          <span>REQ-1043</span>
+          <span>Approvals</span>
+        </aside>
+        <section className="ide-pane editor-pane">
+          <div className="code-line">
+            <span className="muted">const</span> request = <b>{requestTitle}</b>
           </div>
-          <GuardrailRow
-            label="Kill switch"
-            value={guardrails.killSwitch ? "On" : "Off"}
-            tone={guardrails.killSwitch ? "danger" : "good"}
-          />
-          <GuardrailRow
-            label="Approval"
-            value={`${money.format(guardrails.approvalThresholdUsd)}+`}
-            tone="warn"
-          />
-          <GuardrailRow
-            label="Daily cap"
-            value={money.format(guardrails.dailyCapUsd)}
-            tone="good"
-          />
-        </div>
-  );
-}
-
-function TabButton({
-  active,
-  icon,
-  label,
-  onClick
-}: {
-  active: boolean;
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      aria-current={active ? "page" : undefined}
-      aria-label={label}
-      className={`nav-button ${active ? "active" : ""}`}
-      onClick={onClick}
-      type="button"
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function GuardrailRow({
-  label,
-  value,
-  tone
-}: {
-  label: string;
-  value: string;
-  tone: "good" | "warn" | "danger";
-}) {
-  return (
-    <div className="guardrail-row">
-      <span>{label}</span>
-      <strong className={`status-dot ${tone}`}>{value}</strong>
+          <div className="code-line">
+            expert.match(<b>{expertName}</b>) <span className="muted">=</span>{" "}
+            <b>{matchScore}/100</b>
+          </div>
+          <div className="code-line">
+            payout.queue <span className="muted">=</span> {money.format(payoutTotal)}
+          </div>
+          <div className="agent-result">
+            <Sparkles size={16} />
+            Draft outreach prepared. Human send required.
+          </div>
+        </section>
+        <aside className="ide-pane chat-pane">
+          <strong>Hermes</strong>
+          <p>Ranked candidates are ready. No external message or payout will execute without approval.</p>
+          <div className="mini-checks">
+            <span>
+              <Check size={14} />
+              Manual LinkedIn send
+            </span>
+            <span>
+              <Check size={14} />
+              Payout approval gate
+            </span>
+          </div>
+        </aside>
+        <section className="ide-pane terminal-pane">
+          <Code2 size={15} />
+          <code>pnpm build && railway up --detach</code>
+        </section>
+      </div>
     </div>
   );
 }
 
-function Metric({
-  icon,
-  label,
-  value,
-  caption
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  caption: string;
-}) {
+function Metric({ label, value }: { label: string; value: string }) {
   return (
     <article className="metric-card">
-      <div className="metric-icon">{icon}</div>
-      <div>
-        <span>{label}</span>
-        <strong>{value}</strong>
-        <p>{caption}</p>
-      </div>
+      <span>{label}</span>
+      <strong>{value}</strong>
     </article>
   );
 }
 
-function PipelineView({
-  requests,
-  selectedRequest,
-  selectedRequestId,
-  onSelectRequest,
-  rankedExperts,
-  onSelectExpert,
-  selectedExpertId
+function Feature({
+  icon,
+  title,
+  body
 }: {
-  requests: ClientRequest[];
-  selectedRequest: ClientRequest;
-  selectedRequestId: string;
-  onSelectRequest: (id: string) => void;
-  rankedExperts: RankedExpert[];
-  onSelectExpert: (id: string) => void;
-  selectedExpertId: string;
+  icon: React.ReactNode;
+  title: string;
+  body: string;
 }) {
   return (
-    <div className="content-grid">
-      <section className="panel wide">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Demand</p>
-            <h2>Client requests</h2>
-          </div>
-          <button className="secondary-action" type="button" disabled>
-            <ArrowRight size={16} />
-            Intake
-          </button>
-        </div>
-
-        <div className="request-list">
-          {requests.map((request) => (
-            <button
-              key={request.id}
-              aria-pressed={selectedRequestId === request.id}
-              className={`request-row ${selectedRequestId === request.id ? "active" : ""}`}
-              onClick={() => onSelectRequest(request.id)}
-              type="button"
-            >
-              <div>
-                <span className="ticket">{request.id}</span>
-                <strong>{request.title}</strong>
-                <p>{request.context}</p>
-              </div>
-              <div className="request-meta">
-                <span>{money.format(request.budgetUsd)}</span>
-                <small>{request.deadline}</small>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Match</p>
-            <h2>Best experts</h2>
-          </div>
-          <span className="small-pill">{selectedRequest.needs.length} needs</span>
-        </div>
-
-        <div className="expert-list">
-          {rankedExperts.map((expert) => (
-            <button
-              key={expert.id}
-              aria-pressed={selectedExpertId === expert.id}
-              className={`expert-row ${selectedExpertId === expert.id ? "active" : ""}`}
-              onClick={() => onSelectExpert(expert.id)}
-              type="button"
-            >
-              <div className="avatar">{expert.name.slice(0, 2)}</div>
-              <div>
-                <strong>{expert.name}</strong>
-                <span>
-                  {expert.role}, {expert.company}
-                </span>
-                <div className="tag-row">
-                  {expert.tags.slice(0, 3).map((tag) => (
-                    <small key={tag}>{tag}</small>
-                  ))}
-                </div>
-              </div>
-              <b>{expert.matchScore}</b>
-            </button>
-          ))}
-        </div>
-      </section>
-    </div>
+    <article className="feature-card">
+      <div className="feature-icon">{icon}</div>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
   );
 }
 
-function ScoutView({
-  selectedRequest,
-  selectedExpert,
-  rankedExperts,
-  draft,
-  copyState,
-  onCopy,
-  onSelectExpert
-}: {
-  selectedRequest: ClientRequest;
-  selectedExpert: RankedExpert;
-  rankedExperts: RankedExpert[];
-  draft: string;
-  copyState: "idle" | "copied" | "failed";
-  onCopy: () => void;
-  onSelectExpert: (id: string) => void;
-}) {
-  return (
-    <div className="content-grid scout-grid">
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Scout</p>
-            <h2>Source list</h2>
-          </div>
-          <Search size={18} />
-        </div>
-        <div className="expert-list compact">
-          {rankedExperts.map((expert) => (
-            <button
-              key={expert.id}
-              aria-pressed={selectedExpert.id === expert.id}
-              className={`expert-row ${selectedExpert.id === expert.id ? "active" : ""}`}
-              onClick={() => onSelectExpert(expert.id)}
-              type="button"
-            >
-              <div className="avatar">{expert.name.slice(0, 2)}</div>
-              <div>
-                <strong>{expert.name}</strong>
-                <span>{expert.availability}</span>
-              </div>
-              <b>{expert.matchScore}</b>
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel wide">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Draft only</p>
-            <h2>LinkedIn outreach</h2>
-          </div>
-          <span className="manual-pill">
-            <Lock size={14} />
-            Human send
-          </span>
-        </div>
-
-        <div className="draft-shell">
-          <div className="draft-context">
-            <span>{selectedRequest.client}</span>
-            <strong>{selectedRequest.title}</strong>
-            <p>
-              {selectedExpert.name} matches at {selectedExpert.matchScore}/100
-              with {money.format(selectedExpert.rateUsd)} hourly rate.
-            </p>
-          </div>
-          <textarea value={draft} readOnly aria-label="Outreach draft" />
-          <div className="draft-actions">
-            <button className="secondary-action" onClick={onCopy} type="button">
-              {copyState === "copied" ? <Check size={16} /> : <Copy size={16} />}
-              {copyState === "failed"
-                ? "Copy failed"
-                : copyState === "copied"
-                  ? "Copied"
-                  : "Copy"}
-            </button>
-            <button className="primary-action" type="button" disabled>
-              <Send size={16} />
-              Mark queued
-            </button>
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ApprovalsView({
-  payoutQueue,
-  approvalThresholdUsd,
-  killSwitch
-}: {
-  payoutQueue: Payout[];
-  approvalThresholdUsd: number;
-  killSwitch: boolean;
-}) {
-  return (
-    <div className="content-grid">
-      <section className="panel wide">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Money movement</p>
-            <h2>Payout approvals</h2>
-          </div>
-          <span className={killSwitch ? "danger-pill" : "small-pill"}>
-            {killSwitch ? <PauseCircle size={14} /> : <ShieldCheck size={14} />}
-            {killSwitch ? "Halted" : "Active"}
-          </span>
-        </div>
-
-        <div className="payout-list">
-          {payoutQueue.map((payout) => {
-            const needsApproval = payout.amountUsd >= approvalThresholdUsd;
-
-            return (
-              <article key={payout.id} className="payout-row">
-                <div className="metric-icon">
-                  <BadgeDollarSign size={20} />
-                </div>
-                <div>
-                  <strong>{payout.expertName}</strong>
-                  <p>{payout.reason}</p>
-                  <span className={needsApproval ? "warn-text" : "good-text"}>
-                    {needsApproval ? "Approval required" : "Ready below threshold"}
-                  </span>
-                </div>
-                <div className="payout-actions">
-                  <b>{money.format(payout.amountUsd)}</b>
-                  <button
-                    className={needsApproval ? "secondary-action" : "primary-action"}
-                    disabled
-                    type="button"
-                  >
-                    {needsApproval ? "Review" : "Release"}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="panel">
-        <div className="panel-header">
-          <div>
-            <p className="eyebrow">Ops</p>
-            <h2>Checks</h2>
-          </div>
-          <AlertTriangle size={18} />
-        </div>
-        <div className="check-list">
-          <CheckRow label="PayPal mode" value="Sandbox" done />
-          <CheckRow label="Large payouts" value="Manual approval" done />
-          <CheckRow label="LinkedIn sends" value="Draft only" done />
-          <CheckRow label="Agent loop" value="Config gated" done={!killSwitch} />
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function CheckRow({
+function Guardrail({
+  icon,
   label,
-  value,
-  done
+  value
 }: {
+  icon: React.ReactNode;
   label: string;
   value: string;
-  done: boolean;
 }) {
   return (
-    <div className="check-row">
-      <div className={done ? "check-icon done" : "check-icon"}>
-        {done ? <Check size={15} /> : <AlertTriangle size={15} />}
-      </div>
+    <div className="guardrail-row">
+      {icon}
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
