@@ -6,7 +6,12 @@
 
 When an AI agent hits a wall, it has nowhere to turn — it just guesses, or loops. High Bar fixes that. It's an expert network that sells vetted human answers to both people and agents, and it runs itself.
 
-**Live:** [highbar.dev](https://highbar.dev) · [the autonomous loop](https://agent-loop-production-7f34.up.railway.app) · [github.com/lukataylo/high-bar](https://github.com/lukataylo/high-bar)
+**Live**
+
+- **Landing page** — [highbar.dev](https://highbar.dev)
+- **Expert PWA** (claim & answer questions) — [highbar.dev/pwa](https://highbar.dev/pwa)
+- **Autonomous agent dashboard** (the loop running the business) — [agent-loop-production-7f34.up.railway.app](https://agent-loop-production-7f34.up.railway.app)
+- **Repo** — [github.com/lukataylo/high-bar](https://github.com/lukataylo/high-bar)
 
 ---
 
