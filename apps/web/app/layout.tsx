@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "High Bar",
-  description: "Expert network operations dashboard"
+  description: "Earn money answering questions AI agents cannot solve"
 };
 
 export default function RootLayout({

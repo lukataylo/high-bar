@@ -4,14 +4,15 @@ import {
   ArrowRight,
   BadgeCheck,
   Check,
-  Code2,
+  Clock3,
   Command,
-  Database,
+  DollarSign,
   LockKeyhole,
-  MailPlus,
   Menu,
+  MessageSquareText,
   Search,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   WalletCards,
   X
@@ -31,12 +32,11 @@ const money = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
 });
 
-const timeline = [
-  ["Thinking", "Detect where the agent is stuck"],
-  ["Reading", "Review prior attempts and context"],
-  ["Grepping", "Find humans with matching expertise"],
-  ["Editing", "Package a precise answer request"],
-  ["Done", "Pay the expert after human review"]
+const steps = [
+  ["Question lands", "An agent or human submits the problem it cannot finish."],
+  ["Expert matched", "High Bar routes it to people with the right lived experience."],
+  ["Answer reviewed", "The response is checked before it is sent back to the asker."],
+  ["Expert paid", "Useful answers move into the earnings queue."]
 ] as const;
 
 export function Dashboard({
@@ -48,14 +48,12 @@ export function Dashboard({
   renderedAt: string;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const firstRequest = data.requests[0];
-  const firstExperts = firstRequest
-    ? data.rankedExpertsByRequest[firstRequest.id] ?? []
-    : [];
   const payoutTotal = data.payoutQueue.reduce(
     (sum, payout) => sum + payout.amountUsd,
     0
   );
+  const topQuestion = data.requests[0]?.title ?? "Why is this agent stuck?";
+  const topExpert = data.experts[0];
 
   return (
     <main className="site-shell">
@@ -70,18 +68,18 @@ export function Dashboard({
           className={menuOpen ? "nav-links open" : "nav-links"}
           id="primary-navigation"
         >
-          <a href="#product">How it works</a>
-          <a href="#workflow">Routing</a>
-          <a href="#guardrails">Trust</a>
-          <a href="#earn">Earn</a>
+          <a href="#how">How it works</a>
+          <a href="#experts">For experts</a>
+          <a href="#trust">Trust</a>
+          <a href="/api/ask">Agent API</a>
         </nav>
 
         <div className="nav-actions">
-          <a className="text-link" href="/api/ask">
-            Agent URL
+          <a className="text-link" href="/pwa">
+            Log in
           </a>
-          <a className="button-primary" href="/api/ask">
-            Ask a question
+          <a className="button-primary" href="/pwa">
+            Start earning
           </a>
           <button
             aria-controls="primary-navigation"
@@ -96,93 +94,108 @@ export function Dashboard({
         </div>
       </header>
 
-      <section className="hero-band" id="top">
+      <section className="hero-band sales-hero" id="top">
         <div className="hero-copy">
-          <p className="section-kicker">AI + human expert network</p>
-          <h1>When agents get stuck, High Bar routes the question to a human who knows.</h1>
+          <p className="section-kicker">Human experts for stuck agents</p>
+          <h1>Earn money answering questions AI agents cannot solve.</h1>
           <p>
-            High Bar lets people earn money by answering hard questions that AI agents and
-            other humans cannot finish on their own. The system captures context, finds the
-            right expert, and keeps approval visible before answers or payments move.
+            High Bar is an expert network for the agent era. When Claude Code,
+            internal tools, or another human gets stuck, the question is routed to a
+            vetted person who can answer it clearly and get paid.
           </p>
           <div className="hero-actions">
-            <a className="button-download" href="#product">
-              See how it works
+            <a className="button-download" href="/pwa">
+              Log in to the PWA
               <ArrowRight size={16} />
             </a>
-            <a className="button-tertiary" href="#earn">
-              Join as an expert
+            <a className="button-tertiary" href="/api/ask">
+              Ask with one URL
             </a>
           </div>
         </div>
 
-        <ProductMockup
-          requestTitle={firstRequest?.title ?? "Why is this agent failing?"}
-          expertName={firstExperts[0]?.name ?? "Maya Chen"}
-          matchScore={firstExperts[0]?.matchScore ?? 100}
-          payoutTotal={payoutTotal}
+        <ExpertPwaPreview
+          earnings={payoutTotal}
+          expertName={topExpert?.name ?? "Maya Chen"}
+          question={topQuestion}
         />
       </section>
 
       <section className="section-grid metrics-strip" aria-label="Network metrics">
-        <Metric label="Open demand" value={String(data.requests.length)} />
-        <Metric label="Human experts" value={String(data.experts.length)} />
+        <Metric label="Open questions" value={String(data.requests.length)} />
+        <Metric label="Vetted experts" value={String(data.experts.length)} />
         <Metric label="Answers queued" value={String(data.draftCount)} />
-        <Metric label="Expert earnings" value={money.format(payoutTotal)} />
+        <Metric label="Earnings queued" value={money.format(payoutTotal)} />
       </section>
 
-      <section className="content-section split-section" id="product">
+      <section className="content-section split-section" id="how">
         <div>
-          <p className="section-kicker">Product</p>
-          <h2>A marketplace for questions that need human judgment.</h2>
+          <p className="section-kicker">How it works</p>
+          <h2>A simple marketplace for answers that require human judgment.</h2>
         </div>
         <div className="feature-grid">
           <Feature
-            icon={<Search size={18} />}
-            title="Find the person who knows"
-            body="Match stuck questions against expert tags, availability, confidence, and rate before asking for an answer."
+            icon={<MessageSquareText size={18} />}
+            title="Agents ask when blocked"
+            body="A Claude skill, MCP tool, or one-line prompt can send a question to High Bar with the context that failed."
           />
           <Feature
-            icon={<MailPlus size={18} />}
-            title="Package the context"
-            body="Agents hand over the failed path, evidence, and exact question so humans can answer quickly."
+            icon={<Search size={18} />}
+            title="Experts are matched"
+            body="Questions are routed by topic, experience, availability, and answer quality signals."
+          />
+          <Feature
+            icon={<Clock3 size={18} />}
+            title="Fast answers win"
+            body="Experts see concise tasks in the PWA, answer when they know, and skip what they do not."
           />
           <Feature
             icon={<WalletCards size={18} />}
-            title="Pay for useful answers"
-            body="Humans can earn for resolving blockers, with payout thresholds and daily caps surfaced before release."
-          />
-          <Feature
-            icon={<Database size={18} />}
-            title="Built for agent handoffs"
-            body="Postgres and Redis are provisioned on Railway; the MVP is ready for live routing, queues, and review."
+            title="Useful answers earn"
+            body="Accepted answers move into a guarded earnings queue with visible payout controls."
           />
         </div>
       </section>
 
-      <section className="content-section workflow-section" id="workflow">
+      <section className="content-section expert-section" id="experts">
         <div className="section-heading">
-          <p className="section-kicker">Routing timeline</p>
-          <h2>Every handoff shows why a human is needed.</h2>
+          <p className="section-kicker">For experts</p>
+          <h2>Turn your hard-won knowledge into paid, focused answers.</h2>
+          <p>
+            High Bar is for operators, engineers, support leads, policy owners, and
+            specialists who can solve the edge cases automation gets wrong.
+          </p>
+        </div>
+        <div className="expert-grid">
+          <ExpertCard title="Know the answer" body="Claim only the questions where your experience is directly relevant." />
+          <ExpertCard title="Answer async" body="Respond from the PWA without jumping on a sales call or joining a meeting." />
+          <ExpertCard title="Get paid" body="Track accepted answers, pending reviews, and earnings from one mobile-friendly surface." />
+        </div>
+      </section>
+
+      <section className="content-section workflow-section">
+        <div className="section-heading">
+          <p className="section-kicker">Question flow</p>
+          <h2>Agents get unstuck. Humans earn for judgment.</h2>
         </div>
         <div className="timeline-card">
-          {timeline.map(([stage, detail]) => (
+          {steps.map(([stage, detail]) => (
             <div className="timeline-row" key={stage}>
-              <span className={`timeline-pill ${stage.toLowerCase()}`}>{stage}</span>
+              <span className="timeline-pill thinking">{stage}</span>
               <code>{detail}</code>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="content-section comparison-section" id="guardrails">
+      <section className="content-section comparison-section" id="trust">
         <div className="comparison-card">
           <div>
-            <p className="section-kicker">Guardrails</p>
-            <h2>Automation where it helps. Approval where it matters.</h2>
+            <p className="section-kicker">Trust</p>
+            <h2>Payment is guarded. Expert work is visible.</h2>
             <p>
-              The launch posture is conservative: answer requests are visible, payouts stay
-              gated, and operators can pause routing with a kill switch.
+              The agent can route questions and propose payments, but approvals, caps,
+              and a kill switch bound the money movement.
             </p>
           </div>
           <div className="guardrail-list">
@@ -193,12 +206,12 @@ export function Dashboard({
             />
             <Guardrail
               icon={<BadgeCheck size={17} />}
-              label="Approval threshold"
+              label="Review threshold"
               value={`${money.format(guardrails.approvalThresholdUsd)}+`}
             />
             <Guardrail
               icon={<LockKeyhole size={17} />}
-              label="Daily cap"
+              label="Daily payout cap"
               value={money.format(guardrails.dailyCapUsd)}
             />
           </div>
@@ -206,18 +219,18 @@ export function Dashboard({
       </section>
 
       <section className="cta-band" id="earn">
-        <p className="section-kicker">Earn with expertise</p>
-        <h2>High Bar is ready to route stuck questions to paid human experts.</h2>
+        <p className="section-kicker">Expert PWA</p>
+        <h2>Log in, claim a question, and start earning.</h2>
         <p>
-          Bring a difficult question, or join the network as a human expert who gets paid
-          when your answer resolves the blocker.
+          The PWA gives human experts a focused queue of agent questions, accepted
+          answers, and earnings status.
         </p>
         <div className="hero-actions cta-actions">
-          <a className="button-primary" href="/api/ask">
-            Ask a question
+          <a className="button-primary" href="/pwa">
+            Log in to PWA
           </a>
-          <a className="button-tertiary" href="/api/payouts">
-            Join as an expert
+          <a className="button-tertiary" href="/api/ask">
+            View agent ask URL
           </a>
         </div>
       </section>
@@ -227,74 +240,59 @@ export function Dashboard({
           <Command size={18} />
           <span>High Bar</span>
         </div>
-        <span>Human expertise for the questions automation cannot finish.</span>
+        <span>Earn by answering the questions agents cannot finish.</span>
       </footer>
     </main>
   );
 }
 
-function ProductMockup({
-  requestTitle,
+function ExpertPwaPreview({
+  earnings,
   expertName,
-  matchScore,
-  payoutTotal
+  question
 }: {
-  requestTitle: string;
+  earnings: number;
   expertName: string;
-  matchScore: number;
-  payoutTotal: number;
+  question: string;
 }) {
   return (
-    <div className="ide-mockup-card">
-      <div className="ide-toolbar">
-        <span />
-        <span />
-        <span />
-        <strong>highbar-router.ts</strong>
+    <aside className="pwa-preview" aria-label="Expert PWA preview">
+      <div className="pwa-phone-bar">
+        <Smartphone size={16} />
+        <span>High Bar Expert PWA</span>
       </div>
-      <div className="ide-grid">
-        <aside className="ide-sidebar">
-          <strong>Questions</strong>
-          <span>Q-1042</span>
-          <span>Q-1043</span>
-          <span>Approvals</span>
-        </aside>
-        <section className="ide-pane editor-pane">
-          <div className="code-line">
-            <span className="muted">const</span> stuckQuestion = <b>{requestTitle}</b>
-          </div>
-          <div className="code-line">
-            human.match(<b>{expertName}</b>) <span className="muted">=</span>{" "}
-            <b>{matchScore}/100</b>
-          </div>
-          <div className="code-line">
-            earnings.queue <span className="muted">=</span> {money.format(payoutTotal)}
-          </div>
-          <div className="agent-result">
-            <Sparkles size={16} />
-            Human answer requested. Payment requires approval.
-          </div>
-        </section>
-        <aside className="ide-pane chat-pane">
-          <strong>High Bar</strong>
-          <p>Matched experts are ready. No answer request or payout executes without review.</p>
-          <div className="mini-checks">
-            <span>
-              <Check size={14} />
-              Human answer handoff
-            </span>
-            <span>
-              <Check size={14} />
-              Earnings approval gate
-            </span>
-          </div>
-        </aside>
-        <section className="ide-pane terminal-pane">
-          <Code2 size={15} />
-          <code>agent stuck -&gt; human answer -&gt; earnings approved</code>
-        </section>
+      <div className="pwa-panel">
+        <p className="section-kicker">Signed in as</p>
+        <strong>{expertName}</strong>
+        <span>Available for agent questions</span>
       </div>
-    </div>
+      <div className="pwa-question-card">
+        <div>
+          <span>New paid question</span>
+          <h3>{question}</h3>
+        </div>
+        <a className="button-primary" href="/pwa">
+          Claim
+        </a>
+      </div>
+      <div className="pwa-earnings">
+        <DollarSign size={18} />
+        <div>
+          <span>Earnings queued</span>
+          <strong>{money.format(earnings)}</strong>
+        </div>
+      </div>
+      <div className="mini-checks">
+        <span>
+          <Check size={14} />
+          Answer async
+        </span>
+        <span>
+          <Check size={14} />
+          Human review before payout
+        </span>
+      </div>
+    </aside>
   );
 }
 
@@ -319,6 +317,16 @@ function Feature({
   return (
     <article className="feature-card">
       <div className="feature-icon">{icon}</div>
+      <h3>{title}</h3>
+      <p>{body}</p>
+    </article>
+  );
+}
+
+function ExpertCard({ title, body }: { title: string; body: string }) {
+  return (
+    <article className="expert-card">
+      <Sparkles size={18} />
       <h3>{title}</h3>
       <p>{body}</p>
     </article>

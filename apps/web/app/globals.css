@@ -242,10 +242,104 @@ p {
 .feature-card,
 .comparison-card,
 .timeline-card,
-.metric-card {
+.metric-card,
+.pwa-preview,
+.expert-card,
+.login-card,
+.pwa-summary-card,
+.pwa-task-card {
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--surface-card);
+}
+
+.sales-hero {
+  align-items: center;
+}
+
+.pwa-preview {
+  display: grid;
+  gap: 14px;
+  max-width: 520px;
+  margin-left: auto;
+  padding: 16px;
+}
+
+.pwa-phone-bar,
+.pwa-earnings,
+.back-link,
+.login-input,
+.pwa-app-header,
+.pwa-summary-card,
+.pwa-trust-note {
+  display: flex;
+  align-items: center;
+}
+
+.pwa-phone-bar {
+  gap: 8px;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--muted);
+  padding: 0 0 14px;
+  font-size: 13px;
+}
+
+.pwa-panel,
+.pwa-question-card,
+.pwa-earnings {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--canvas-soft);
+  padding: 16px;
+}
+
+.pwa-panel strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.pwa-panel span,
+.pwa-question-card span,
+.pwa-earnings span,
+.pwa-task-card span,
+.pwa-summary-card span,
+.login-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.pwa-question-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.pwa-question-card h3 {
+  margin: 6px 0 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.pwa-earnings {
+  gap: 12px;
+}
+
+.pwa-earnings svg,
+.expert-card svg,
+.pwa-summary-card svg,
+.pwa-trust-note svg {
+  color: var(--primary);
+}
+
+.pwa-earnings strong {
+  display: block;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 400;
 }
 
 .ide-mockup-card {
@@ -452,6 +546,30 @@ p {
   gap: 28px;
 }
 
+.expert-section {
+  display: grid;
+  gap: 28px;
+}
+
+.expert-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.expert-card {
+  padding: 24px;
+}
+
+.expert-card h3 {
+  margin-top: 16px;
+}
+
+.expert-card p {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
 .section-heading {
   max-width: 720px;
 }
@@ -592,6 +710,150 @@ p {
   padding: 64px 48px;
 }
 
+.pwa-login-page,
+.pwa-app-shell {
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+.pwa-login-page {
+  display: grid;
+  place-items: center;
+  padding: 32px 18px;
+}
+
+.login-card {
+  width: min(100%, 520px);
+  padding: 32px;
+}
+
+.login-card h1 {
+  margin-bottom: 16px;
+  font-size: 44px;
+}
+
+.login-card label {
+  display: block;
+  margin: 22px 0 8px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.back-link {
+  width: fit-content;
+  gap: 8px;
+  margin-bottom: 28px;
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-input {
+  gap: 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--canvas-soft);
+  padding: 0 12px;
+}
+
+.login-input input {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.login-submit {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.login-note {
+  display: block;
+  margin-top: 12px;
+}
+
+.pwa-app-shell {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+
+.pwa-app-header {
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.pwa-app-header h1 {
+  margin-bottom: 0;
+  font-size: 44px;
+}
+
+.pwa-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.pwa-summary-card {
+  gap: 10px;
+  padding: 18px;
+}
+
+.pwa-summary-card strong {
+  margin-left: auto;
+  color: var(--ink);
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.pwa-question-list {
+  display: grid;
+  gap: 16px;
+}
+
+.pwa-task-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 20px;
+  align-items: center;
+  padding: 20px;
+}
+
+.pwa-task-card h2 {
+  margin: 6px 0 0;
+  font-size: 22px;
+}
+
+.pwa-task-card dl {
+  display: flex;
+  gap: 16px;
+  margin: 0;
+}
+
+.pwa-task-card dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.pwa-task-card dd {
+  margin: 3px 0 0;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.pwa-trust-note {
+  gap: 8px;
+  margin-top: 20px;
+  color: var(--body);
+  font-size: 14px;
+}
+
 @media (max-width: 1024px) {
   .top-nav {
     padding: 0 24px;
@@ -607,7 +869,9 @@ p {
   }
 
   .metrics-strip,
-  .feature-grid {
+  .feature-grid,
+  .expert-grid,
+  .pwa-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -664,8 +928,39 @@ p {
   }
 
   .metrics-strip,
-  .feature-grid {
+  .feature-grid,
+  .expert-grid,
+  .pwa-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pwa-preview {
+    margin-left: 0;
+  }
+
+  .pwa-question-card,
+  .pwa-task-card,
+  .pwa-app-header {
+    grid-template-columns: 1fr;
+  }
+
+  .pwa-app-header,
+  .pwa-task-card {
+    align-items: flex-start;
+  }
+
+  .pwa-task-card dl {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pwa-task-card .button-primary {
+    width: 100%;
+  }
+
+  .login-card h1,
+  .pwa-app-header h1 {
+    font-size: 34px;
   }
 
   .ide-grid {
