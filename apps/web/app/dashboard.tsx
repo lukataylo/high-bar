@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BadgeCheck,
   Check,
-  ClipboardList,
   Code2,
   Command,
   Database,
@@ -66,7 +65,11 @@ export function Dashboard({
           <span>High Bar</span>
         </a>
 
-        <nav className={menuOpen ? "nav-links open" : "nav-links"} aria-label="Primary">
+        <nav
+          aria-label="Primary"
+          className={menuOpen ? "nav-links open" : "nav-links"}
+          id="primary-navigation"
+        >
           <a href="#product">Product</a>
           <a href="#workflow">Workflow</a>
           <a href="#guardrails">Guardrails</a>
@@ -81,6 +84,8 @@ export function Dashboard({
             Get live
           </a>
           <button
+            aria-controls="primary-navigation"
+            aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             className="menu-button"
             onClick={() => setMenuOpen((open) => !open)}
@@ -236,7 +241,7 @@ function ProductMockup({
   payoutTotal: number;
 }) {
   return (
-    <div className="ide-mockup-card" id="product">
+    <div className="ide-mockup-card">
       <div className="ide-toolbar">
         <span />
         <span />

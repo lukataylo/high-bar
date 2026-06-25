@@ -139,13 +139,13 @@ code {
 
 .button-primary {
   min-height: 40px;
-  background: var(--primary);
+  background: var(--primary-active);
   color: var(--on-primary);
   padding: 10px 18px;
 }
 
 .button-primary:hover {
-  background: var(--primary-active);
+  background: #a93600;
 }
 
 .button-download {
@@ -183,7 +183,7 @@ code {
   margin: 0 0 16px;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -240,7 +240,7 @@ p {
 .timeline-card,
 .metric-card {
   border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface-card);
 }
 
@@ -400,7 +400,7 @@ p {
   margin-bottom: 12px;
   color: var(--muted);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
 }
 
@@ -472,7 +472,7 @@ p {
   color: var(--ink);
   padding: 4px 10px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0;
   text-transform: uppercase;
 }
@@ -495,7 +495,21 @@ p {
 
 .timeline-pill.done {
   background: var(--timeline-done);
-  color: var(--on-primary);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .timeline-row code {
@@ -518,7 +532,7 @@ p {
   display: grid;
   align-content: start;
   border: 1px solid var(--hairline);
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
@@ -607,7 +621,7 @@ p {
     left: 16px;
     display: none;
     border: 1px solid var(--hairline);
-    border-radius: 12px;
+    border-radius: 8px;
     background: var(--surface-card);
     padding: 16px;
   }
