@@ -3,6 +3,10 @@ import { NextResponse, type NextRequest } from "next/server";
 const AUTH_REALM = "High Bar";
 
 function isAuthorized(request: NextRequest) {
+  if (process.env.AUTH_REQUIRED?.toLowerCase() !== "true") {
+    return true;
+  }
+
   const authSecret = process.env.AUTH_SECRET;
 
   if (!authSecret) {
