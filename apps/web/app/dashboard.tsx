@@ -77,10 +77,10 @@ export function Dashboard({
         </nav>
 
         <div className="nav-actions">
-          <a className="text-link" href="/api/agent">
-            API
+          <a className="text-link" href="/api/ask">
+            Agent URL
           </a>
-          <a className="button-primary" href="#earn">
+          <a className="button-primary" href="/api/ask">
             Ask a question
           </a>
           <button
@@ -213,7 +213,7 @@ export function Dashboard({
           when your answer resolves the blocker.
         </p>
         <div className="hero-actions cta-actions">
-          <a className="button-primary" href="/api/agent">
+          <a className="button-primary" href="/api/ask">
             Ask a question
           </a>
           <a className="button-tertiary" href="/api/payouts">
