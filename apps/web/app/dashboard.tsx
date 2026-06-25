@@ -79,7 +79,7 @@ export function Dashboard({
             Log in
           </a>
           <a className="button-primary" href="/pwa">
-            Start earning
+            Join as an expert
           </a>
           <button
             aria-controls="primary-navigation"
@@ -104,12 +104,12 @@ export function Dashboard({
             vetted person who can answer it clearly and get paid.
           </p>
           <div className="hero-actions">
-            <a className="button-download" href="/pwa">
-              Log in to the PWA
+            <a className="button-download" href="/ask">
+              Ask a question
               <ArrowRight size={16} />
             </a>
-            <a className="button-tertiary" href="/api/ask">
-              Ask with one URL
+            <a className="button-tertiary" href="/pwa">
+              Join as an expert
             </a>
           </div>
         </div>
@@ -227,10 +227,10 @@ export function Dashboard({
         </p>
         <div className="hero-actions cta-actions">
           <a className="button-primary" href="/pwa">
-            Log in to PWA
+            Join as an expert
           </a>
-          <a className="button-tertiary" href="/api/ask">
-            View agent ask URL
+          <a className="button-tertiary" href="/ask">
+            Ask a question
           </a>
         </div>
       </section>

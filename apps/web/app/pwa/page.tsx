@@ -21,6 +21,7 @@ const questions = [
 
 export default function ExpertPwaPage() {
   const [signedIn, setSignedIn] = useState(false);
+  const [claimedQuestion, setClaimedQuestion] = useState<string | null>(null);
 
   if (!signedIn) {
     return (
@@ -91,12 +92,23 @@ export default function ExpertPwaPage() {
                 <dd>{question.sla}</dd>
               </div>
             </dl>
-            <button className="button-primary" type="button">
-              Claim question
+            <button
+              className="button-primary"
+              onClick={() => setClaimedQuestion(question.title)}
+              type="button"
+            >
+              {claimedQuestion === question.title ? "Claimed" : "Claim question"}
             </button>
           </article>
         ))}
       </section>
+
+      {claimedQuestion ? (
+        <section className="pwa-claimed-banner" aria-live="polite">
+          <Check size={16} />
+          Claimed: {claimedQuestion}
+        </section>
+      ) : null}
 
       <footer className="pwa-trust-note">
         <LockKeyhole size={16} />

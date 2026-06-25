@@ -247,7 +247,10 @@ p {
 .expert-card,
 .login-card,
 .pwa-summary-card,
-.pwa-task-card {
+.pwa-task-card,
+.ask-card,
+.ask-result-card,
+.pwa-claimed-banner {
   border: 1px solid var(--hairline);
   border-radius: 8px;
   background: var(--surface-card);
@@ -711,28 +714,47 @@ p {
 }
 
 .pwa-login-page,
-.pwa-app-shell {
+.pwa-app-shell,
+.ask-page {
   min-height: 100vh;
   background: var(--canvas);
 }
 
-.pwa-login-page {
+.pwa-login-page,
+.ask-page {
   display: grid;
   place-items: center;
   padding: 32px 18px;
 }
 
-.login-card {
+.ask-page {
+  grid-template-columns: minmax(0, 560px) minmax(320px, 420px);
+  gap: 18px;
+  align-items: stretch;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.login-card,
+.ask-card,
+.ask-result-card {
   width: min(100%, 520px);
   padding: 32px;
 }
 
-.login-card h1 {
+.ask-card,
+.ask-result-card {
+  width: 100%;
+}
+
+.login-card h1,
+.ask-card h1 {
   margin-bottom: 16px;
   font-size: 44px;
 }
 
-.login-card label {
+.login-card label,
+.ask-form label {
   display: block;
   margin: 22px 0 8px;
   color: var(--ink);
@@ -774,6 +796,68 @@ p {
 .login-note {
   display: block;
   margin-top: 12px;
+}
+
+.ask-form textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--canvas-soft);
+  color: var(--ink);
+  padding: 12px;
+  line-height: 1.45;
+}
+
+.ask-submit {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.spin-icon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ask-result-card {
+  align-content: start;
+  display: grid;
+  gap: 14px;
+}
+
+.ask-result-card h2 {
+  margin-bottom: 0;
+}
+
+.ask-result-card code {
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: var(--canvas-soft);
+  padding: 2px 5px;
+}
+
+.matched-experts {
+  display: grid;
+  gap: 10px;
+}
+
+.matched-experts div {
+  display: grid;
+  gap: 3px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--canvas-soft);
+  padding: 12px;
+}
+
+.matched-experts span,
+.matched-experts small {
+  color: var(--muted);
 }
 
 .pwa-app-shell {
@@ -852,6 +936,15 @@ p {
   margin-top: 20px;
   color: var(--body);
   font-size: 14px;
+}
+
+.pwa-claimed-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--success);
+  padding: 14px 16px;
 }
 
 @media (max-width: 1024px) {
@@ -940,7 +1033,8 @@ p {
 
   .pwa-question-card,
   .pwa-task-card,
-  .pwa-app-header {
+  .pwa-app-header,
+  .ask-page {
     grid-template-columns: 1fr;
   }
 
@@ -959,6 +1053,7 @@ p {
   }
 
   .login-card h1,
+  .ask-card h1,
   .pwa-app-header h1 {
     font-size: 34px;
   }
