@@ -33,10 +33,10 @@ const money = new Intl.NumberFormat("en-US", {
 });
 
 const steps = [
-  ["Question lands", "An agent or human submits the problem it cannot finish."],
-  ["Expert matched", "High Bar routes it to people with the right lived experience."],
-  ["Answer reviewed", "The response is checked before it is sent back to the asker."],
-  ["Expert paid", "Useful answers move into the earnings queue."]
+  ["Ask", "A human types a question — or an agent sends one automatically over our API the moment it gets stuck."],
+  ["Match", "We route it to a vetted expert with the exact experience, in seconds."],
+  ["Answer", "A real specialist replies with a clear, reviewed answer — often within the hour."],
+  ["Pay out", "Escrow releases to the expert only once you accept. No answer, no charge."]
 ] as const;
 
 export function Dashboard({
@@ -70,7 +70,7 @@ export function Dashboard({
         >
           <a href="#how">How it works</a>
           <a href="#experts">For experts</a>
-          <a href="#trust">Trust</a>
+          <a href="#trust">Why it&rsquo;s safe</a>
           <a href="/api/ask">Agent API</a>
         </nav>
 
@@ -78,8 +78,8 @@ export function Dashboard({
           <a className="text-link" href="/pwa">
             Log in
           </a>
-          <a className="button-primary" href="/pwa">
-            Join as an expert
+          <a className="button-primary" href="/ask">
+            Ask a question
           </a>
           <button
             aria-controls="primary-navigation"
@@ -96,20 +96,21 @@ export function Dashboard({
 
       <section className="hero-band sales-hero" id="top">
         <div className="hero-copy">
-          <p className="section-kicker">Human experts for stuck agents</p>
-          <h1>Earn money answering questions AI agents cannot solve.</h1>
+          <p className="section-kicker">Ask → Match → Answer → Pay out</p>
+          <h1>When AI hits a wall, get a real expert&nbsp;— in minutes.</h1>
           <p>
-            High Bar is an expert network for the agent era. When Claude Code,
-            internal tools, or another human gets stuck, the question is routed to a
-            vetted person who can answer it clearly and get paid.
+            High Bar is the expert network for the AI era. Ask your hardest
+            question by hand, or let your agent ask for you over our API. A vetted
+            specialist answers fast — and you only pay for answers that land, held
+            safely in escrow until they do.
           </p>
           <div className="hero-actions">
             <a className="button-download" href="/ask">
-              Ask a question
+              Get an expert answer
               <ArrowRight size={16} />
             </a>
             <a className="button-tertiary" href="/pwa">
-              Join as an expert
+              Earn as an expert
             </a>
           </div>
         </div>
@@ -122,37 +123,37 @@ export function Dashboard({
       </section>
 
       <section className="section-grid metrics-strip" aria-label="Network metrics">
-        <Metric label="Open questions" value={String(data.requests.length)} />
+        <Metric label="Live questions" value={String(data.requests.length)} />
         <Metric label="Vetted experts" value={String(data.experts.length)} />
-        <Metric label="Answers queued" value={String(data.draftCount)} />
-        <Metric label="Earnings queued" value={money.format(payoutTotal)} />
+        <Metric label="Answers in flight" value={String(data.draftCount)} />
+        <Metric label="Paid to experts" value={money.format(payoutTotal)} />
       </section>
 
       <section className="content-section split-section" id="how">
         <div>
           <p className="section-kicker">How it works</p>
-          <h2>A simple marketplace for answers that require human judgment.</h2>
+          <h2>Stuck? You&rsquo;re four steps from a real answer.</h2>
         </div>
         <div className="feature-grid">
           <Feature
             icon={<MessageSquareText size={18} />}
-            title="Agents ask when blocked"
-            body="A Claude skill, MCP tool, or one-line prompt can send a question to High Bar with the context that failed."
+            title="Ask in seconds"
+            body="Type your question, or let your AI agent send it automatically the moment it gets stuck — no call, no scheduling."
           />
           <Feature
             icon={<Search size={18} />}
-            title="Experts are matched"
-            body="Questions are routed by topic, experience, availability, and answer quality signals."
+            title="Matched to the right human"
+            body="We route it to a vetted specialist with the exact experience — by skill, track record, and availability."
           />
           <Feature
             icon={<Clock3 size={18} />}
-            title="Fast answers win"
-            body="Experts see concise tasks in the PWA, answer when they know, and skip what they do not."
+            title="Answered, not guessed"
+            body="Someone who has actually solved this replies with a clear, reviewed answer — often within the hour."
           />
           <Feature
             icon={<WalletCards size={18} />}
-            title="Useful answers earn"
-            body="Accepted answers move into a guarded earnings queue with visible payout controls."
+            title="Pay only for what lands"
+            body="Your payment waits in escrow and releases only when you accept the answer. No answer, no charge."
           />
         </div>
       </section>
@@ -160,23 +161,25 @@ export function Dashboard({
       <section className="content-section expert-section" id="experts">
         <div className="section-heading">
           <p className="section-kicker">For experts</p>
-          <h2>Turn your hard-won knowledge into paid, focused answers.</h2>
+          <h2>Get paid for what you already know.</h2>
           <p>
-            High Bar is for operators, engineers, support leads, policy owners, and
-            specialists who can solve the edge cases automation gets wrong.
+            Operators, engineers, founders, clinicians, underwriters, lawyers —
+            anyone who can crack the problems AI gets wrong. Claim the questions
+            you&rsquo;ll nail, answer on your own time, and cash out the moment you
+            are accepted.
           </p>
         </div>
         <div className="expert-grid">
-          <ExpertCard title="Know the answer" body="Claim only the questions where your experience is directly relevant." />
-          <ExpertCard title="Answer async" body="Respond from the PWA without jumping on a sales call or joining a meeting." />
-          <ExpertCard title="Get paid" body="Track accepted answers, pending reviews, and earnings from one mobile-friendly surface." />
+          <ExpertCard title="Claim what you know" body="Only see questions in your wheelhouse. Skip the rest — no quotas, no busywork." />
+          <ExpertCard title="Answer on your time" body="Reply from your phone in minutes. No sales calls, no meetings, no scheduling." />
+          <ExpertCard title="Get paid fast" body="Accepted answers pay out automatically. Track every dollar from one clean dashboard." />
         </div>
       </section>
 
       <section className="content-section workflow-section">
         <div className="section-heading">
-          <p className="section-kicker">Question flow</p>
-          <h2>Agents get unstuck. Humans earn for judgment.</h2>
+          <p className="section-kicker">The flow</p>
+          <h2>Agents get unstuck. Experts get paid.</h2>
         </div>
         <div className="timeline-card">
           {steps.map(([stage, detail]) => (
@@ -191,11 +194,13 @@ export function Dashboard({
       <section className="content-section comparison-section" id="trust">
         <div className="comparison-card">
           <div>
-            <p className="section-kicker">Trust</p>
-            <h2>Payment is guarded. Expert work is visible.</h2>
+            <p className="section-kicker">Why it&rsquo;s safe</p>
+            <h2>An AI runs the business. It can never run off with your money.</h2>
             <p>
-              The agent can route questions and propose payments, but approvals, caps,
-              and a kill switch bound the money movement.
+              High Bar operates itself — matching, answering, and settling
+              payouts autonomously. But every payment is boxed in by hard caps, a
+              human-approval threshold, and a one-tap kill switch. Nothing moves
+              unchecked.
             </p>
           </div>
           <div className="guardrail-list">
@@ -206,8 +211,8 @@ export function Dashboard({
             />
             <Guardrail
               icon={<BadgeCheck size={17} />}
-              label="Review threshold"
-              value={`${money.format(guardrails.approvalThresholdUsd)}+`}
+              label="Human-approval over"
+              value={`${money.format(guardrails.approvalThresholdUsd)}`}
             />
             <Guardrail
               icon={<LockKeyhole size={17} />}
@@ -219,18 +224,18 @@ export function Dashboard({
       </section>
 
       <section className="cta-band" id="earn">
-        <p className="section-kicker">Expert PWA</p>
-        <h2>Log in, claim a question, and start earning.</h2>
+        <p className="section-kicker">Get started</p>
+        <h2>Stop guessing. Get a real answer.</h2>
         <p>
-          The PWA gives human experts a focused queue of agent questions, accepted
-          answers, and earnings status.
+          Bring your hardest question — or point your agent at our API. A vetted
+          expert is ready, and you only pay when the answer lands.
         </p>
         <div className="hero-actions cta-actions">
-          <a className="button-primary" href="/pwa">
-            Join as an expert
+          <a className="button-primary" href="/ask">
+            Get an expert answer
           </a>
-          <a className="button-tertiary" href="/ask">
-            Ask a question
+          <a className="button-tertiary" href="/pwa">
+            Earn as an expert
           </a>
         </div>
       </section>
@@ -240,7 +245,7 @@ export function Dashboard({
           <Command size={18} />
           <span>High Bar</span>
         </div>
-        <span>Earn by answering the questions agents cannot finish.</span>
+        <span>Expert answers for humans and AI agents — Ask → Match → Answer → Pay out.</span>
       </footer>
     </main>
   );
@@ -264,7 +269,7 @@ function ExpertPwaPreview({
       <div className="pwa-panel">
         <p className="section-kicker">Signed in as</p>
         <strong>{expertName}</strong>
-        <span>Available for agent questions</span>
+        <span>Available for new questions</span>
       </div>
       <div className="pwa-question-card">
         <div>
@@ -278,18 +283,18 @@ function ExpertPwaPreview({
       <div className="pwa-earnings">
         <DollarSign size={18} />
         <div>
-          <span>Earnings queued</span>
+          <span>Earnings ready</span>
           <strong>{money.format(earnings)}</strong>
         </div>
       </div>
       <div className="mini-checks">
         <span>
           <Check size={14} />
-          Answer async
+          Answer in minutes
         </span>
         <span>
           <Check size={14} />
-          Human review before payout
+          Paid on accept
         </span>
       </div>
     </aside>
