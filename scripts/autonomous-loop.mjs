@@ -13,6 +13,7 @@
 // be toggled on camera. No external dependencies; safe to `node` directly.
 
 import { appendFileSync, writeFileSync, readFileSync, existsSync, mkdirSync } from "node:fs";
+import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -189,3 +190,31 @@ setInterval(() => {
   writeState(state);
   process.stdout.write(`  [${new Date(ts).toLocaleTimeString()}] cycle ${state.cycles} · revenue ${usd(state.revenueCents)} · paid ${usd(state.expertPaidCents)} · denials ${state.guardrailDenials}\n`);
 }, TICK_MS);
+
+// ---- Live public dashboard (Railway sets PORT) ----
+if (process.env.PORT) {
+  const recentFeed = (k) => existsSync(AUDIT)
+    ? readFileSync(AUDIT, "utf8").trim().split("\n").slice(-k).map((l) => JSON.parse(l)).reverse()
+    : [];
+  const color = (d) => ({ executed: "#22c55e", needs_approval: "#f59e0b", denied: "#ef4444", halted: "#ef4444", flagged: "#a855f7" }[d] || "#94a3b8");
+  const esc = (x) => String(x ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
+  createServer((req, res) => {
+    if (req.url === "/healthz") { res.writeHead(200); return res.end("ok"); }
+    if (req.url === "/state") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(readState())); }
+    if (req.url === "/feed") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(recentFeed(150))); }
+    const s = readState();
+    const up = s.startedAt ? ((Date.now() - new Date(s.startedAt)) / 3600_000).toFixed(1) : "0";
+    const killed = controlKilled();
+    const rows = recentFeed(45).map((e) =>
+      `<tr><td>${new Date(e.ts).toLocaleString()}</td><td>${esc(e.cycleId)}</td><td>${esc(e.action)}</td><td style="color:${color(e.decision)};font-weight:600">${esc(e.decision)}</td><td>${esc(e.detail)}</td></tr>`).join("");
+    const card = (k, v) => `<div class=card><div class=k>${k}</div><div class=v>${v}</div></div>`;
+    res.writeHead(200, { "content-type": "text/html" });
+    res.end(`<!doctype html><html><head><meta charset=utf8><meta http-equiv=refresh content=5><title>High Bar — autonomous loop</title>
+<style>body{background:#0b1120;color:#e2e8f0;font:14px/1.5 ui-monospace,SFMono-Regular,monospace;margin:0;padding:24px}h1{margin:0 0 2px;font-size:22px}.sub{color:#64748b;margin-bottom:16px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#111827;border:1px solid #1f2937;border-radius:10px;padding:10px 16px;min-width:140px}.card .k{color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em}.card .v{font-size:20px;font-weight:700}.live{color:${killed ? "#ef4444" : "#22c55e"}}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}thead td{color:#64748b;text-transform:uppercase;font-size:10px;letter-spacing:.05em}td{padding:4px 8px;border-bottom:1px solid #1f2937;vertical-align:top}</style></head>
+<body><h1>High Bar <span class=live>${killed ? "⛔ kill-switch ON" : "● live"}</span></h1>
+<div class=sub>autonomous expert-network — running hands-off for ${up}h · ${s.cycles} cycles · guardrailed money movement</div>
+<div class=cards>${card("Platform revenue", usd(s.revenueCents))}${card("Paid to experts", usd(s.expertPaidCents))}${card("VAT collected", usd(s.vatCollectedCents))}${card("Tax set aside", usd(s.taxSetAsideCents))}${card("Questions answered", s.questionsAnswered)}${card("Leads found", s.leadsFound)}${card("Pending human approval", s.payoutsPendingApproval)}${card("Guardrail denials", s.guardrailDenials)}</div>
+<table><thead><tr><td>time</td><td>cycle</td><td>action</td><td>decision</td><td>detail</td></tr></thead><tbody>${rows}</tbody></table>
+</body></html>`);
+  }).listen(process.env.PORT, () => console.log(`dashboard listening on :${process.env.PORT}`));
+}
