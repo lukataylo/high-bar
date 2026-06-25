@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   Check,
   Clock3,
-  Command,
   DollarSign,
   LockKeyhole,
   Menu,
@@ -59,7 +58,7 @@ export function Dashboard({
     <main className="site-shell">
       <header className="top-nav">
         <a className="wordmark" href="#top" aria-label="High Bar home">
-          <Command size={18} />
+          <img src="/logo.svg" alt="High Bar" className="wordmark-logo" width={22} height={24} />
           <span>High Bar</span>
         </a>
 
@@ -242,7 +241,7 @@ export function Dashboard({
 
       <footer className="footer">
         <div className="wordmark">
-          <Command size={18} />
+          <img src="/logo.svg" alt="High Bar" className="wordmark-logo" width={22} height={24} />
           <span>High Bar</span>
         </div>
         <span>Expert answers for humans and AI agents — Ask → Match → Answer → Pay out.</span>

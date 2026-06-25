@@ -109,6 +109,14 @@ code {
   font-weight: 700;
 }
 
+.wordmark-logo {
+  display: block;
+  height: 22px;
+  width: auto;
+  max-height: 100%;
+  flex: 0 0 auto;
+}
+
 .nav-links {
   gap: 28px;
   color: var(--ink);
