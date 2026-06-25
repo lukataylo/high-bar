@@ -5,10 +5,10 @@
   "packageManager": "pnpm@10.25.0",
   "scripts": {
     "dev": "pnpm --filter @high-bar/web dev",
-    "build": "pnpm --filter @high-bar/web build",
+    "build": "pnpm -r build",
     "start": "pnpm --filter @high-bar/web start",
-    "lint": "pnpm --filter @high-bar/web lint",
-    "typecheck": "pnpm --filter @high-bar/web typecheck"
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
   },
   "pnpm": {
     "overrides": {
