@@ -1,137 +1,241 @@
 "use client";
 
-import { ArrowLeft, Check, Clock3, DollarSign, LockKeyhole, Mail } from "lucide-react";
+import {
+  ArrowLeft,
+  Layers,
+  Mail,
+  PencilLine,
+  User,
+  Wallet
+} from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
+import { AccountTab } from "./AccountTab";
+import { AnswersTab } from "./AnswersTab";
+import {
+  DEMO_AVAILABLE_USD,
+  DEMO_PAID_OUT_USD,
+  INITIAL_PAYOUTS,
+  INITIAL_QUEUE
+} from "./data";
+import { EarningsTab } from "./EarningsTab";
+import { SwipeDeck } from "./SwipeDeck";
+import type { ClaimedQuestion, Domain, Payout, Question, TabId } from "./types";
 
-const questions = [
-  {
-    title: "Why is the refund agent misclassifying policy exceptions?",
-    source: "Autonomous support agent",
-    reward: "$450",
-    sla: "24h"
-  },
-  {
-    title: "How should this agent explain usage-based billing disputes?",
-    source: "Product operator",
-    reward: "$325",
-    sla: "48h"
-  }
+const TABS: { id: TabId; label: string; icon: typeof Layers }[] = [
+  { id: "queue", label: "Queue", icon: Layers },
+  { id: "answers", label: "Answers", icon: PencilLine },
+  { id: "earnings", label: "Earnings", icon: Wallet },
+  { id: "account", label: "Account", icon: User }
 ];
+
+const TAB_TITLES: Record<TabId, string> = {
+  queue: "Question queue",
+  answers: "Your answers",
+  earnings: "Earnings",
+  account: "Account"
+};
 
 export default function ExpertPwaPage() {
   const [signedIn, setSignedIn] = useState(false);
-  const [claimedQuestion, setClaimedQuestion] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>("queue");
+
+  const [queue, setQueue] = useState<Question[]>(INITIAL_QUEUE);
+  const [claimed, setClaimed] = useState<ClaimedQuestion[]>([]);
+  const [payouts] = useState<Payout[]>(INITIAL_PAYOUTS);
+
+  const [displayName, setDisplayName] = useState("Maya Chen");
+  const [email, setEmail] = useState("expert@highbar.dev");
+  const [domains, setDomains] = useState<Domain[]>([
+    "Engineering",
+    "Operations"
+  ]);
+  const [available, setAvailable] = useState(true);
+
+  const pendingTotal = useMemo(
+    () =>
+      claimed
+        .filter((question) => question.status === "answered")
+        .reduce((sum, question) => sum + question.reward, 0),
+    [claimed]
+  );
+
+  function handleClaim(id: string) {
+    setQueue((current) => {
+      const target = current.find((question) => question.id === id);
+      if (target) {
+        setClaimed((existing) =>
+          existing.some((question) => question.id === id)
+            ? existing
+            : [...existing, { ...target, answer: "", status: "claimed" }]
+        );
+      }
+      return current.filter((question) => question.id !== id);
+    });
+  }
+
+  function handleSkip(id: string) {
+    setQueue((current) => current.filter((question) => question.id !== id));
+  }
+
+  function handleDraftChange(id: string, value: string) {
+    setClaimed((current) =>
+      current.map((question) =>
+        question.id === id ? { ...question, answer: value } : question
+      )
+    );
+  }
+
+  function handleSubmitAnswer(id: string) {
+    setClaimed((current) =>
+      current.map((question) =>
+        question.id === id ? { ...question, status: "answered" } : question
+      )
+    );
+  }
+
+  function handleToggleDomain(domain: Domain) {
+    setDomains((current) =>
+      current.includes(domain)
+        ? current.filter((item) => item !== domain)
+        : [...current, domain]
+    );
+  }
+
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSignedIn(true);
+  }
+
+  function handleSignOut() {
+    setSignedIn(false);
+    setActiveTab("queue");
+  }
 
   if (!signedIn) {
     return (
       <main className="pwa-login-page">
-        <section className="login-card" aria-labelledby="login-title">
+        <section className="login-card pwa-login-card" aria-labelledby="login-title">
           <Link className="back-link" href="/">
             <ArrowLeft size={16} />
             High Bar
           </Link>
+          <img
+            alt="High Bar"
+            className="pwa-login-logo"
+            height={28}
+            src="/logo.svg"
+            width={26}
+          />
           <p className="section-kicker">Expert PWA</p>
           <h1 id="login-title">Log in to answer agent questions.</h1>
           <p>
             Claim questions where your judgment can unblock an AI agent or a human
             operator. Accepted answers move into your earnings queue.
           </p>
-          <label htmlFor="email">Email</label>
-          <div className="login-input">
-            <Mail size={17} />
-            <input
-              autoComplete="email"
-              defaultValue="expert@highbar.dev"
-              id="email"
-              inputMode="email"
-              type="email"
-            />
-          </div>
-          <button className="button-primary login-submit" onClick={() => setSignedIn(true)} type="button">
-            Continue to expert queue
-          </button>
-          <span className="login-note">Demo login for the launch PWA.</span>
+          <form onSubmit={handleLogin}>
+            <label htmlFor="email">Email</label>
+            <div className="login-input">
+              <Mail size={17} />
+              <input
+                autoComplete="email"
+                defaultValue="expert@highbar.dev"
+                id="email"
+                inputMode="email"
+                onChange={(event) => setEmail(event.target.value)}
+                type="email"
+              />
+            </div>
+            <button className="button-primary login-submit" type="submit">
+              Continue to expert queue
+            </button>
+          </form>
+          <span className="login-note">Demo login — any email works.</span>
         </section>
       </main>
     );
   }
 
   return (
-    <main className="pwa-app-shell">
-      <header className="pwa-app-header">
-        <div>
-          <p className="section-kicker">High Bar Expert PWA</p>
-          <h1>Agent questions ready for you</h1>
-        </div>
-        <Link className="button-tertiary" href="/">
-          Sales page
-        </Link>
-      </header>
+    <div className="pwa-shell">
+      <div className="pwa-phone">
+        <header className="pwa-topbar">
+          <span className="pwa-topbar-brand">
+            <img
+              alt="High Bar"
+              className="wordmark-logo"
+              height={22}
+              src="/logo.svg"
+              width={20}
+            />
+            <span>{TAB_TITLES[activeTab]}</span>
+          </span>
+          <span className={`pwa-status-dot${available ? " on" : " off"}`}>
+            {available ? "Available" : "Paused"}
+          </span>
+        </header>
 
-      <section className="pwa-summary-grid" aria-label="Expert summary">
-        <Summary icon={<DollarSign size={18} />} label="Queued earnings" value="$530" />
-        <Summary icon={<Clock3 size={18} />} label="Open questions" value="2" />
-        <Summary icon={<Check size={18} />} label="Accepted answers" value="3" />
-      </section>
+        <main className="pwa-content">
+          {activeTab === "queue" ? (
+            <SwipeDeck questions={queue} onClaim={handleClaim} onSkip={handleSkip} />
+          ) : null}
 
-      <section className="pwa-question-list" aria-label="Questions to answer">
-        {questions.map((question) => (
-          <article className="pwa-task-card" key={question.title}>
-            <div>
-              <span>{question.source}</span>
-              <h2>{question.title}</h2>
-            </div>
-            <dl>
-              <div>
-                <dt>Reward</dt>
-                <dd>{question.reward}</dd>
-              </div>
-              <div>
-                <dt>SLA</dt>
-                <dd>{question.sla}</dd>
-              </div>
-            </dl>
-            <button
-              className="button-primary"
-              onClick={() => setClaimedQuestion(question.title)}
-              type="button"
-            >
-              {claimedQuestion === question.title ? "Claimed" : "Claim question"}
-            </button>
-          </article>
-        ))}
-      </section>
+          {activeTab === "answers" ? (
+            <AnswersTab
+              claimed={claimed}
+              onDraftChange={handleDraftChange}
+              onSubmit={handleSubmitAnswer}
+            />
+          ) : null}
 
-      {claimedQuestion ? (
-        <section className="pwa-claimed-banner" aria-live="polite">
-          <Check size={16} />
-          Claimed: {claimedQuestion}
-        </section>
-      ) : null}
+          {activeTab === "earnings" ? (
+            <EarningsTab
+              available={DEMO_AVAILABLE_USD}
+              paidOut={DEMO_PAID_OUT_USD}
+              payouts={payouts}
+              pending={pendingTotal}
+            />
+          ) : null}
 
-      <footer className="pwa-trust-note">
-        <LockKeyhole size={16} />
-        Payments are reviewed against threshold, cap, and kill-switch policy before release.
-      </footer>
-    </main>
-  );
-}
+          {activeTab === "account" ? (
+            <AccountTab
+              available={available}
+              displayName={displayName}
+              domains={domains}
+              email={email}
+              onEmailChange={setEmail}
+              onNameChange={setDisplayName}
+              onSignOut={handleSignOut}
+              onToggleAvailability={() => setAvailable((value) => !value)}
+              onToggleDomain={handleToggleDomain}
+            />
+          ) : null}
+        </main>
 
-function Summary({
-  icon,
-  label,
-  value
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <article className="pwa-summary-card">
-      {icon}
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
+        <nav className="pwa-tabbar" aria-label="Primary">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const active = tab.id === activeTab;
+            const badge =
+              tab.id === "answers" && claimed.length > 0 ? claimed.length : null;
+            return (
+              <button
+                aria-current={active ? "page" : undefined}
+                className={`pwa-tab${active ? " active" : ""}`}
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                type="button"
+              >
+                <span className="pwa-tab-icon">
+                  <Icon size={22} />
+                  {badge ? <span className="pwa-tab-badge">{badge}</span> : null}
+                </span>
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+    </div>
   );
 }

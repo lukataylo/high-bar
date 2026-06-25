@@ -43,6 +43,43 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@22.20.0)
 
+  apps/api:
+    dependencies:
+      '@high-bar/accounting':
+        specifier: workspace:*
+        version: link:../../packages/accounting
+      '@high-bar/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@high-bar/mcp-expert-network':
+        specifier: workspace:*
+        version: link:../../packages/mcp-expert-network
+      '@high-bar/payments':
+        specifier: workspace:*
+        version: link:../../packages/payments
+      '@hono/node-server':
+        specifier: ^1.13.7
+        version: 1.19.14(hono@4.12.27)
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(gel@2.2.0)(postgres@3.4.9)
+      hono:
+        specifier: ^4.6.0
+        version: 4.12.27
+      zod:
+        specifier: ^3.24.1
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.8
+        version: 2.1.9(@types/node@22.20.0)
+
   apps/web:
     dependencies:
       '@types/node':
