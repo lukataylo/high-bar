@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/banner.png" alt="High Bar — expert-answer network for humans + AI agents · Ask → Match → Answer → Pay out" width="100%" />
+</p>
+
 # High Bar
 
 > An expert-answer network that sells **vetted answers** to humans **and AI agents** — operated end-to-end by an autonomous agent.
@@ -5,7 +9,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-end--to--end-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![pnpm](https://img.shields.io/badge/pnpm-10-F69220?logo=pnpm&logoColor=white)](https://pnpm.io/)
 [![Turborepo](https://img.shields.io/badge/Turborepo-monorepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build/)
-[![Status](https://img.shields.io/badge/status-active%20development-yellow)](#project-status--roadmap)
+[![Status](https://img.shields.io/badge/status-live%20%C2%B7%20deployed-brightgreen)](#live-demo)
 
 ---
 
@@ -32,13 +36,23 @@ Two constraints shape every decision:
 
 ---
 
+## Live demo
+
+- **Landing site / web console:** **[https://highbar.dev](https://highbar.dev)** — the installable Next.js PWA (asker + expert + agent surfaces), deployed on Railway.
+- **Autonomous loop — live dashboard:** **[https://agent-loop-production-7f34.up.railway.app](https://agent-loop-production-7f34.up.railway.app)** — the business runs **hands-off** here right now. The dashboard shows live **platform revenue**, **expert payouts**, **VAT / tax set-aside**, **guardrail denials**, and **kill-switch state**, with a streaming `proposed → allowed/denied → executed` audit feed. JSON endpoints: [`/state`](https://agent-loop-production-7f34.up.railway.app/state), [`/feed`](https://agent-loop-production-7f34.up.railway.app/feed), [`/healthz`](https://agent-loop-production-7f34.up.railway.app/healthz).
+- **Repo:** **[https://github.com/lukataylo/high-bar](https://github.com/lukataylo/high-bar)**
+
+The loop ([`scripts/autonomous-loop.mjs`](scripts/autonomous-loop.mjs)) runs the full cycle unattended — discover/qualify leads → draft outreach (human-approval) → intake a paid question → escrow hold → match a vetted expert → answer → capture → guardrailed payout → bookkeeping — passing every money move through the **same fail-closed ordering** as the real [`PayoutPolicyEngine`](packages/payments/src/policy.ts) (kill-switch → eligibility allowlist → daily cap → approval threshold). It periodically injects a prompt-injection "answer" to prove the payout is **denied**, and reads the kill switch each tick so it can be toggled live.
+
+---
+
 ## How this project addresses the judging criteria
 
-Every claim below maps to code in this repo. **67 tests pass** (payments 30, research 21, MCP 16) and **every package typechecks clean** (`pnpm -r typecheck`). See [Evaluate it yourself](#evaluate-it-yourself) to reproduce.
+Every claim below maps to code in this repo. **125 tests pass** (payments 43, accounting 23, research 21, expert-content 18, MCP 16, agent-gateway 4) and **every package typechecks clean** (`pnpm -r typecheck`). See [Evaluate it yourself](#evaluate-it-yourself) to reproduce.
 
 ### 1. Technical execution
 - **Fail-closed payout policy engine** — [`packages/payments/src/policy.ts`](packages/payments/src/policy.ts) implements `PayoutPolicyEngine` with a deliberate 5-stage decision order (kill-switch → eligibility allowlist → daily cap → approval threshold → auto-approve), default-denying anything that isn't a payout. Covered by 10 tests in [`packages/payments/test/policy.test.ts`](packages/payments/test/policy.test.ts).
-- **Real Stripe money plumbing** — manual-capture PaymentIntents, partial refunds, and Connect transfers with idempotency keys, plus a webhook-event mapper over 10 Stripe event types ([`packages/payments/src/{payments,webhooks,connect}.ts`](packages/payments/src), 20 more tests).
+- **Real Stripe money plumbing** — manual-capture PaymentIntents, partial refunds, and Connect transfers with idempotency keys, plus a webhook-event mapper over 10 Stripe event types ([`packages/payments/src/{payments,webhooks,connect}.ts`](packages/payments/src), 33 more tests).
 - **Hexagonal, dependency-injected design** — engines depend on thin ports (`ApiKeyPort`, `RateLimitStore`, `PayoutPolicyEngineDeps`), so the money/agent logic is unit-testable without Stripe, Postgres, or Redis running.
 - **Shared, schema-locked contracts** — zod + Drizzle definitions in [`packages/core/src`](packages/core/src) (`db/schema.ts`, `contracts/*`) are the single source of truth every package builds against.
 
@@ -54,7 +68,8 @@ Every claim below maps to code in this repo. **67 tests pass** (payments 30, res
 - **Agents as autonomous customers** — [`packages/mcp-expert-network/src`](packages/mcp-expert-network/src) exposes the marketplace over MCP so other AI agents can buy answers programmatically (`mcp.ts`, `http.ts`).
 
 ### 4. UX clarity
-- **Installable Next.js PWA console** — [`apps/web/`](apps/web) is the asker + expert + approval-inbox UI, **deployed live on Railway**.
+- **Installable Next.js PWA console** — [`apps/web/`](apps/web) is the asker + expert + approval-inbox UI, **live at [highbar.dev](https://highbar.dev)** (Next.js Route Handlers in [`apps/web/app/api`](apps/web/app/api) back the asker/agent/payout surfaces).
+- **A live operator dashboard for the autonomous loop** — the deployed loop renders revenue, payouts, pending-approval queues, guardrail denials, and kill-switch state with a streaming audit feed (**[live](https://agent-loop-production-7f34.up.railway.app)**, [`scripts/autonomous-loop.mjs`](scripts/autonomous-loop.mjs)).
 - **Human-in-the-loop inbox** — outreach drafts and over-threshold payouts surface in a review queue (`outreach_drafts` table, `requires_approval` on payouts) so a person approves with full context.
 - **Legible audit trail** — every proposed side effect is recorded `proposed → allowed/denied → executed` ([`packages/core/src/audit.ts`](packages/core/src/audit.ts), `audit_log` table), so operators can always see *what the agent wanted vs. what ran*.
 
@@ -62,7 +77,8 @@ Every claim below maps to code in this repo. **67 tests pass** (payments 30, res
 - **Production payments, not a toy** — Stripe manual-capture escrow + Connect Express payouts ([`packages/payments`](packages/payments)) is the same pattern real marketplaces ship.
 - **A real integration surface for agent customers** — [`packages/mcp-expert-network/src/{auth,http,mcp}.ts`](packages/mcp-expert-network/src) provides hashed-API-key auth, scopes, and per-key rate limiting over both MCP and REST.
 - **Compliance-first growth** — draft-only outreach ([`packages/research`](packages/research)) avoids the scraping/automation that gets real businesses banned.
-- **Deployable today** — live web service on Railway with Postgres + Redis; see [Deployment](#deployment).
+- **Deployed today** — the web console ([highbar.dev](https://highbar.dev)) and the autonomous loop ([dashboard](https://agent-loop-production-7f34.up.railway.app)) are both live on Railway; see [Deployment](#deployment).
+- **Full books, not just payments** — [`packages/accounting`](packages/accounting) keeps a double-entry ledger with VAT and corporation-tax set-aside, invoices, and reconciliation (`tax.ts`, `ledger.ts`, `invoices.ts`, `reconcile.ts`), the financial plumbing a real self-running business needs.
 
 ### 6. Safety & oversight design
 - **Fail-closed by construction** — `PayoutPolicyEngine` denies first and only allows at the end; a missing/unvetted expert, unverified KYC, or absent Connect account all block payout ([`packages/payments/src/policy.ts`](packages/payments/src/policy.ts)).
@@ -70,30 +86,38 @@ Every claim below maps to code in this repo. **67 tests pass** (payments 30, res
 - **Least-privilege agent API** — keys are stored as **sha-256 hashes only**, gated by scopes, and throttled by a per-key token-bucket rate limiter ([`packages/mcp-expert-network/src/auth.ts`](packages/mcp-expert-network/src/auth.ts), `hashApiKey` / `hasScope` / `RateLimitStore`).
 - **Defense-in-depth + audit** — RBAC ([`packages/core/src/rbac.ts`](packages/core/src/rbac.ts)), immutable audit log ([`packages/core/src/audit.ts`](packages/core/src/audit.ts)), and untrusted-content isolation (see [Security model](#security-model)).
 
-> **Honest status:** the policy engine, payments, research, MCP/REST surface, and web app are **built and tested today**. The runtime that *invokes* them on a cron — `apps/agent-gateway`, `services/hermes`, and `apps/api` — is **in progress / specified by the `packages/core` contracts** but not yet wired end-to-end. See [Project status / roadmap](#project-status--roadmap).
+> **Honest status:** the policy engine, payments, accounting, research, expert-content, MCP/REST surface, the `apps/agent-gateway` propose→authorize runtime, and the web app are **built and tested today** (125 tests). The web console and the autonomous loop are **deployed and running hands-off** (see [Live demo](#live-demo)). What is *not* yet live: **persistence to a managed Postgres** (the deployed surfaces run on in-memory/seed state, though the Drizzle schema is defined in `packages/core`), **live Stripe money movement** (the loop exercises the full escrow cycle against the same guardrails but does not yet move real funds), and the **Hermes live-LLM** path (`apps/agent-gateway/src/runtimes/hermes.ts` exists but transparently degrades to a deterministic pipeline when no model is configured). See [Project status / roadmap](#project-status--roadmap).
 
 ---
 
 ## Evaluate it yourself
 
-A judge can verify every claim above in a few minutes:
+A judge can verify every claim above in a few minutes — or just open the [live demo](#live-demo):
 
 ```bash
 # 1. Clone and install
-git clone <this-repo> && cd self-running
+git clone https://github.com/lukataylo/high-bar && cd high-bar
 pnpm install
 
 # 2. Typecheck the whole monorepo (expect: clean)
 pnpm -r typecheck
 
-# 3. Run each package's tests (expect: 67 passing total)
-pnpm --filter @high-bar/payments test            # 30 passing — money-safety logic
+# 3. Run the tests (expect: 125 passing total)
+pnpm -r test                                      # everything
+pnpm --filter @high-bar/payments test             # 43 passing — money-safety logic + Stripe mappers
+pnpm --filter @high-bar/accounting test           # 23 passing — ledger, VAT/tax, invoices, reconciliation
 pnpm --filter @high-bar/research test             # 21 passing — lead scoring + draft outreach
+pnpm --filter @high-bar/expert-content test       # 18 passing — screening, templates, compliance intake
 pnpm --filter @high-bar/mcp-expert-network test   # 16 passing — auth, scopes, rate limit, MCP/REST
+pnpm --filter @high-bar/agent-gateway test        # 4 passing  — propose→authorize gateway
+
+# 4. Run the autonomous loop locally (seeds backdated history, then ticks live)
+node scripts/autonomous-loop.mjs --seed           # or open the deployed dashboard (see Live demo)
 ```
 
-- **Read the money-safety logic first:** [`packages/payments/src/policy.ts`](packages/payments/src/policy.ts) is the ~115-line `PayoutPolicyEngine` — kill-switch, eligibility allowlist, daily cap, and human-approval threshold, in that order. Its tests ([`packages/payments/test/policy.test.ts`](packages/payments/test/policy.test.ts)) read like an executable spec of the safety guarantees.
-- **Live web console:** the Next.js PWA ([`apps/web/`](apps/web)) is **deployed on Railway** behind HTTP Basic auth (credentials available on request).
+- **Read the money-safety logic first:** [`packages/payments/src/policy.ts`](packages/payments/src/policy.ts) is the `PayoutPolicyEngine` — kill-switch, eligibility allowlist, daily cap, and human-approval threshold, in that order. Its tests ([`packages/payments/test/policy.test.ts`](packages/payments/test/policy.test.ts)) read like an executable spec of the safety guarantees.
+- **Watch it run hands-off:** the [live dashboard](https://agent-loop-production-7f34.up.railway.app) streams the loop's `proposed → allowed/denied → executed` audit feed; `/state` and `/feed` expose the raw JSON.
+- **Live web console:** the Next.js PWA ([`apps/web/`](apps/web)) is **deployed at [highbar.dev](https://highbar.dev)** (an optional HTTP Basic auth gate is available via `AUTH_REQUIRED` — see [`apps/web/middleware.ts`](apps/web/middleware.ts)).
 - **Guardrail knobs:** [`.env.example`](.env.example) documents `PAYOUT_APPROVAL_THRESHOLD`, `PAYOUT_DAILY_CAP`, and `AGENT_KILL_SWITCH`.
 
 ---
@@ -105,17 +129,18 @@ A TypeScript monorepo managed with **pnpm workspaces + Turborepo** (`apps/*`, `p
 ```
 self-running/
 ├─ apps/
-│  ├─ web/             Next.js PWA — asker + expert UI, answer flow, approval inbox, dashboards   [built]
-│  ├─ api/             Backend (tRPC + REST webhooks) — business logic, auth, payment orchestration  (planned)
-│  └─ agent-gateway/   Orchestrates the Hermes runtime: task intake, cron loops, POLICY engine     (planned)
-├─ services/
-│  └─ hermes/          Nous Hermes agent runtime (container) — loop, skills, memory; OpenAI-compatible  (planned)
+│  ├─ web/             Next.js PWA + Route Handlers — asker/expert/agent UI, payouts API, dashboards   [built · live @ highbar.dev]
+│  └─ agent-gateway/   Propose→authorize runtime: scheduler, PolicyEngine, Hermes runtime (degrades to deterministic)  [built · 4 tests]
 ├─ packages/
 │  ├─ core/            Domain model, Drizzle/Postgres schema, RBAC, audit log, shared zod contracts  [built]
-│  ├─ payments/        Stripe — PaymentIntents (manual capture), Connect Express + Transfers, guardrails  [built · 30 tests]
+│  ├─ payments/        Stripe — PaymentIntents (manual capture), Connect Express + Transfers, guardrails  [built · 43 tests]
+│  ├─ accounting/      Double-entry ledger, VAT/tax set-aside, invoices, reconciliation, reports     [built · 23 tests]
 │  ├─ research/        Lead gen, qualification scoring, LinkedIn/email DRAFT queue (no auto-send)    [built · 21 tests]
+│  ├─ expert-content/  Expert screening, client-question templates, compliance attestations, intake  [built · 18 tests]
 │  └─ mcp-expert-network/  MCP server + public agent API: list_domains, pricing, submit_question, …  [built · 16 tests]
-└─ docs/               Operational notes (e.g. domain setup)
+├─ scripts/
+│  └─ autonomous-loop.mjs   The hands-off loop — full cycle, fail-closed guardrails, live dashboard  [deployed on Railway]
+└─ docs/               Submission checklist, demo script, security model, ops notes
 ```
 
 ### The trust boundary (critical)
@@ -162,13 +187,14 @@ Asker ──submit──▶ Question (authorize hold: Stripe PaymentIntent, manu
 | Language | **TypeScript**, end-to-end |
 | Monorepo | **pnpm** workspaces + **Turborepo** |
 | Web / PWA | **Next.js** (installable PWA: asker + expert + approval inbox) |
-| Backend | tRPC + REST webhooks *(planned `apps/api`)* |
-| Data | **Postgres** via **Drizzle ORM** |
+| Backend | **Next.js Route Handlers** (`apps/web/app/api`) + the `apps/agent-gateway` propose→authorize runtime |
+| Data | **Postgres** schema via **Drizzle ORM** (`packages/core`); managed-DB persistence not yet wired into the deployed surfaces |
 | Cache / queues | **Redis** (rate-limit, locks, queues) |
+| Accounting | Double-entry ledger + VAT/tax set-aside + invoicing (`packages/accounting`) |
 | Payments | **Stripe** — PaymentIntents (manual-capture escrow) + **Connect Express** Transfers for payouts |
 | Agent API | **MCP** server + scoped REST API |
-| Agent loop | **Nous Hermes** (OpenAI-compatible backend; optional Anthropic routing) |
-| Hosting | **Railway** (Postgres + Redis + services) |
+| Agent loop | **Nous Hermes** (OpenAI-compatible or Anthropic backend), transparently degrading to a deterministic pipeline when no model is configured |
+| Hosting | **Railway** — web console (`highbar.dev`) + autonomous-loop service, both live |
 
 ---
 
@@ -271,13 +297,14 @@ All variables are documented in [`.env.example`](.env.example). `.env` is git-ig
 
 ## Deployment
 
-High Bar deploys to **[Railway](https://railway.app/)**:
+High Bar runs on **[Railway](https://railway.app/)**, with two services live today:
 
-- A **Postgres** plugin (primary data store) and a **Redis** plugin (rate-limits, locks, queues).
-- A **web** service for the Next.js PWA (additional services — `api`, `agent-gateway`, `hermes` — come online as those packages land).
-- All secrets are stored in **Railway environment variables only**, with separate sandbox/live credentials per environment.
+- The **web console** — the Next.js PWA — at **[highbar.dev](https://highbar.dev)**.
+- The **autonomous-loop** service — [`scripts/autonomous-loop.mjs`](scripts/autonomous-loop.mjs), started via [`railway.json`](railway.json) (`healthcheckPath: /healthz`, `restartPolicyType: ALWAYS`) — at **[agent-loop-production-7f34.up.railway.app](https://agent-loop-production-7f34.up.railway.app)**.
+- Provisioning targets a **Postgres** plugin (primary data store) and a **Redis** plugin (rate-limits, locks, queues); the deployed surfaces currently run on in-memory/seed state, with managed-DB persistence the next step.
+- All secrets live in **Railway environment variables only**, with separate sandbox/live credentials per environment.
 
-To put the app on the production domain **`highbar.dev`**, follow [`docs/DOMAIN_SETUP.md`](docs/DOMAIN_SETUP.md) — it walks through adding the custom domain in Railway and pointing DNS (apex + `www`) at the Railway target over HTTPS.
+To put the web app on the production domain **`highbar.dev`**, follow [`docs/DOMAIN_SETUP.md`](docs/DOMAIN_SETUP.md) — it walks through adding the custom domain in Railway and pointing DNS (apex + `www`) at the Railway target over HTTPS.
 
 > `.dev` is on the browser HSTS preload list, so it is HTTPS-only; Railway issues TLS automatically once DNS resolves.
 
@@ -285,17 +312,18 @@ To put the app on the production domain **`highbar.dev`**, follow [`docs/DOMAIN_
 
 ## Project status / roadmap
 
-> **Active development.** The foundation and contracts are in place; several services and packages are still being built. Statuses below reflect the current tree.
+> **Shipped and running hands-off.** The marketplace, money-safety, accounting, and agent surfaces are built and tested; the web console and the autonomous loop are deployed live. Statuses below reflect the current tree.
 
 | Milestone | Scope | Status |
 |---|---|---|
 | **M0 — Foundation** | Monorepo, `packages/core` schema + zod types, API/MCP/AgentRuntime contracts, Railway provisioning | ✅ Done |
-| **M1 — Marketplace MVP** | Asker submits (PWA + MCP) → expert answers → authorize/capture/payout in sandbox | 🚧 In progress (`web`, `payments`) |
-| **M2 — Agent core** | Hermes gateway + policy engine + audit + kill switch; cron biz-dev loop with daily digest | ⏳ Planned (`agent-gateway`, `hermes`) |
-| **M3 — Research + outreach** | Lead gen, qualification, LinkedIn/email draft queue + approval inbox | 🚧 In progress (`research`) |
-| **M4 — Hardening** | Security review actioned, rate limits, monitoring; promote toward live Stripe | ⏳ Planned |
+| **M1 — Marketplace MVP** | Asker submits (PWA + MCP) → expert answers → authorize/capture/payout cycle | ✅ Done (`web` live, `payments` 43 tests; full cycle runs in the loop) |
+| **M2 — Agent core** | Propose→authorize gateway + policy engine + audit + kill switch; autonomous biz-dev loop | ✅ Done (`agent-gateway` + deployed `autonomous-loop`); Hermes live-LLM optional |
+| **M3 — Research + outreach** | Lead gen, qualification, LinkedIn/email draft queue + approval inbox | ✅ Done (`research` 21 tests; draft-only, human-approved) |
+| **M4 — Accounting** | Double-entry ledger, VAT/tax set-aside, invoices, reconciliation | ✅ Done (`accounting` 23 tests) |
+| **M5 — Hardening** | Managed-Postgres persistence, live Stripe money movement, monitoring | 🚧 In progress |
 
-**Currently in the repo (built + tested):** `apps/web` (deployed on Railway), `packages/core` (complete schema + contracts), `packages/payments` (30 tests), `packages/research` (21 tests), and `packages/mcp-expert-network` (16 tests) — **67 tests passing, all packages typecheck clean**. Still being wired end-to-end: `apps/agent-gateway`, `apps/api`, and `services/hermes` (the cron runtime that *invokes* the above on a schedule), all specified by the `packages/core` contracts.
+**Currently in the repo (built + tested):** `apps/web` (live at highbar.dev), `apps/agent-gateway` (4 tests), `packages/core` (complete schema + contracts), `packages/payments` (43 tests), `packages/accounting` (23 tests), `packages/research` (21 tests), `packages/expert-content` (18 tests), and `packages/mcp-expert-network` (16 tests) — **125 tests passing, all packages typecheck clean** — plus `scripts/autonomous-loop.mjs` deployed and running hands-off. Still to wire up: **managed-Postgres persistence**, **live Stripe money movement**, and the **Hermes live-LLM** path (the gateway runs the deterministic pipeline until a model is configured).
 
 ---
 
