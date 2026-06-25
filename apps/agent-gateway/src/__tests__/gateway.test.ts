@@ -9,6 +9,7 @@ import { PayoutPolicyEngine } from "@high-bar/payments";
 import { Gateway } from "../gateway";
 import { GatewayPolicyEngine } from "../policy";
 import { GatewayScheduler } from "../scheduler";
+import { DeterministicRuntime } from "../runtimes/deterministic";
 import type { EnvReader } from "../ports";
 import {
   AllowlistEligibilityPort,
@@ -183,6 +184,129 @@ describe("kill switch", () => {
     const halt = audit.entries.find((e) => e.action === "cycle.halt");
     expect(halt).toBeDefined();
     expect(halt?.decision).toBe("denied");
+  });
+});
+
+describe("answer-quality supervision", () => {
+  it("flags a low-quality answer (allowed, executed) and audits the full trail", async () => {
+    const eligibility = new AllowlistEligibilityPort();
+    const flagAction: ProposedAction = {
+      type: "flag_for_re_review",
+      answerId: "answer_42",
+      reason: "Quality score 30 below threshold 60.",
+    };
+    const runtime = new StubRuntime([flagAction]);
+    const { gateway, audit, approvalQueue, executors } = buildHarness(runtime, eligibility);
+
+    const summary = await gateway.runCycle({
+      id: "q1",
+      kind: "answer_quality_review",
+      input: {},
+    });
+
+    // flag_for_re_review -> allowed and executed (low-risk).
+    expect(executors.reReviewFlags).toHaveLength(1);
+    expect(executors.reReviewFlags[0]?.answerId).toBe("answer_42");
+    expect(approvalQueue.items).toHaveLength(0);
+    expect(summary.executed).toBe(1);
+    expect(summary.queued).toBe(0);
+    expect(summary.denied).toBe(0);
+
+    const trail = audit.entries
+      .filter((e) => e.action === "flag_for_re_review")
+      .map((e) => e.decision);
+    expect(trail).toEqual(["proposed", "allowed", "executed"]);
+  });
+
+  it("NEVER auto-suspends an expert: expert_suspend is allowed but human-gated to the queue", async () => {
+    const eligibility = new AllowlistEligibilityPort();
+    const suspendAction: ProposedAction = {
+      type: "expert_suspend",
+      expertId: "expert_low_quality",
+      reason: "3 low-quality answers this cycle; proposing suspension for human review.",
+    };
+    const runtime = new StubRuntime([suspendAction]);
+    const { gateway, audit, approvalQueue, executors } = buildHarness(runtime, eligibility);
+
+    const summary = await gateway.runCycle({
+      id: "q2",
+      kind: "answer_quality_review",
+      input: {},
+    });
+
+    // Parked for a human — the suspend executor is NEVER invoked.
+    expect(executors.suspendedExperts).toHaveLength(0);
+    expect(approvalQueue.items).toHaveLength(1);
+    expect(approvalQueue.items[0]?.action.type).toBe("expert_suspend");
+    expect(approvalQueue.items[0]?.decision.requiresHumanApproval).toBe(true);
+    expect(summary.executed).toBe(0);
+    expect(summary.queued).toBe(1);
+    expect(summary.denied).toBe(0);
+
+    const decisions = audit.entries
+      .filter((e) => e.action === "expert_suspend")
+      .map((e) => e.decision);
+    expect(decisions).toContain("allowed");
+    expect(decisions).not.toContain("executed");
+  });
+
+  it("end-to-end via the deterministic runtime: repeat low quality flags answers AND queues a suspension", async () => {
+    const eligibility = new AllowlistEligibilityPort();
+    const runtime = new DeterministicRuntime();
+    const { gateway, approvalQueue, executors } = buildHarness(runtime, eligibility);
+
+    const summary = await gateway.runCycle({
+      id: "q3",
+      kind: "answer_quality_review",
+      input: {
+        answers: [
+          { answerId: "a1", expertId: "expert_x", qualityScore: 20 },
+          { answerId: "a2", expertId: "expert_x", qualityScore: 35 },
+          { answerId: "a3", expertId: "expert_x", qualityScore: 10 },
+          { answerId: "a4", expertId: "expert_ok", qualityScore: 90 },
+        ],
+      },
+    });
+
+    // Three low-quality answers from expert_x flagged + executed.
+    expect(executors.reReviewFlags).toHaveLength(3);
+    // Repeat low quality -> suspension proposed, but human-gated (queued, not executed).
+    expect(executors.suspendedExperts).toHaveLength(0);
+    expect(approvalQueue.items.map((i) => i.action.type)).toContain("expert_suspend");
+    expect(summary.executed).toBe(3);
+    expect(summary.queued).toBe(1);
+  });
+});
+
+describe("network-health supervision", () => {
+  it("emits an SLA-breach alert (allowed, executed) and audits it", async () => {
+    const eligibility = new AllowlistEligibilityPort();
+    const runtime = new DeterministicRuntime();
+    const { gateway, audit, approvalQueue, executors } = buildHarness(runtime, eligibility);
+
+    const summary = await gateway.runCycle({
+      id: "h1",
+      kind: "network_health_scan",
+      input: {
+        questions: [
+          { questionId: "q_breach", ageHours: 72, slaHours: 48 },
+          { questionId: "q_fine", ageHours: 10, slaHours: 48 },
+        ],
+      },
+    });
+
+    // Only the breaching question raises an alert; both alert is executed (no money/comms).
+    expect(executors.slaAlerts).toHaveLength(1);
+    expect(executors.slaAlerts[0]?.questionId).toBe("q_breach");
+    expect(approvalQueue.items).toHaveLength(0);
+    expect(summary.executed).toBe(1);
+    expect(summary.queued).toBe(0);
+    expect(summary.denied).toBe(0);
+
+    const trail = audit.entries
+      .filter((e) => e.action === "sla_breach_alert")
+      .map((e) => e.decision);
+    expect(trail).toEqual(["proposed", "allowed", "executed"]);
   });
 });
 

@@ -10,7 +10,16 @@ import { z } from "zod";
 
 export const AgentTask = z.object({
   id: z.string(),
-  kind: z.enum(["lead_discovery", "lead_qualification", "opportunity_scan", "daily_digest"]),
+  kind: z.enum([
+    "lead_discovery",
+    "lead_qualification",
+    "opportunity_scan",
+    "daily_digest",
+    // Hermes quality/health supervision: surfaces issues through the SAME
+    // propose->authorize policy gate so a human/policy decides consequences.
+    "answer_quality_review",
+    "network_health_scan",
+  ]),
   input: z.record(z.unknown()).default({}),
 });
 export type AgentTask = z.infer<typeof AgentTask>;
@@ -35,6 +44,25 @@ export const ProposedAction = z.discriminatedUnion("type", [
     name: z.string(),
     profileUrl: z.string().optional(),
     score: z.number().int().min(0).max(100),
+  }),
+  // Hermes answer-quality supervision: low-risk, flags an answer for re-review.
+  z.object({
+    type: z.literal("flag_for_re_review"),
+    answerId: z.string(),
+    reason: z.string(),
+  }),
+  // Hermes answer-quality supervision: consequential — suspending an expert
+  // must NEVER auto-execute; policy always routes this to human approval.
+  z.object({
+    type: z.literal("expert_suspend"),
+    expertId: z.string(),
+    reason: z.string(),
+  }),
+  // Hermes network-health supervision: raises an SLA-breach alert/notification.
+  z.object({
+    type: z.literal("sla_breach_alert"),
+    questionId: z.string(),
+    detail: z.string(),
   }),
 ]);
 export type ProposedAction = z.infer<typeof ProposedAction>;

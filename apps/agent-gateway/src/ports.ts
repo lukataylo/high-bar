@@ -9,6 +9,9 @@ import type { AuditEntry, ProposedAction, PolicyDecision } from "@high-bar/core"
 export type LeadUpsertAction = Extract<ProposedAction, { type: "lead.upsert" }>;
 export type OutreachDraftAction = Extract<ProposedAction, { type: "outreach.draft" }>;
 export type PayoutCreateAction = Extract<ProposedAction, { type: "payout.create" }>;
+export type FlagForReReviewAction = Extract<ProposedAction, { type: "flag_for_re_review" }>;
+export type ExpertSuspendAction = Extract<ProposedAction, { type: "expert_suspend" }>;
+export type SlaBreachAlertAction = Extract<ProposedAction, { type: "sla_breach_alert" }>;
 
 export interface ExecutorPorts {
   /** Persist a discovered lead. */
@@ -21,6 +24,16 @@ export interface ExecutorPorts {
   enqueueOutreachDraft(action: OutreachDraftAction): Promise<void>;
   /** Move money. Only ever invoked after the payout policy ALLOWs with no human gate. */
   createPayout(action: PayoutCreateAction): Promise<void>;
+  /** Flag an answer for re-review (low-risk Hermes quality signal). */
+  flagForReReview(action: FlagForReReviewAction): Promise<void>;
+  /**
+   * Suspend an expert. Consequential — the policy ALWAYS human-gates this, so it
+   * is routed to the approval queue and this is never reached by the default
+   * policy. Present for completeness/symmetry with the other executors.
+   */
+  suspendExpert(action: ExpertSuspendAction): Promise<void>;
+  /** Raise an SLA-breach alert/notification (no money, no outbound comms). */
+  emitSlaAlert(action: SlaBreachAlertAction): Promise<void>;
 }
 
 /** An action that was ALLOWED but is gated on human approval — parked, never executed. */

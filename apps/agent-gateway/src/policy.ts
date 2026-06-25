@@ -19,6 +19,10 @@ export interface GatewayPolicyEngineDeps {
  *  - `outreach.draft` -> ALLOWED but ALWAYS requiresHumanApproval (draft-only,
  *                        never auto-sent).
  *  - `lead.upsert`    -> ALLOWED (pure data write, no money, no outbound comms).
+ *  - `flag_for_re_review` -> ALLOWED (low-risk; flags an answer for re-review).
+ *  - `sla_breach_alert`   -> ALLOWED (raises an alert/notification only).
+ *  - `expert_suspend`     -> ALLOWED but ALWAYS requiresHumanApproval
+ *                            (consequential; never auto-suspend an expert).
  *  - anything else    -> DENIED.
  */
 export class GatewayPolicyEngine implements PolicyEngine {
@@ -44,6 +48,25 @@ export class GatewayPolicyEngine implements PolicyEngine {
           allowed: true,
           requiresHumanApproval: false,
           reason: "Lead upsert is a data-only write with no money or outbound comms.",
+        });
+      case "flag_for_re_review":
+        return this.decision({
+          allowed: true,
+          requiresHumanApproval: false,
+          reason: "Flagging an answer for re-review is low-risk; no money or outbound comms.",
+        });
+      case "sla_breach_alert":
+        return this.decision({
+          allowed: true,
+          requiresHumanApproval: false,
+          reason: "SLA-breach alert raises an internal notification only; no money or comms.",
+        });
+      case "expert_suspend":
+        return this.decision({
+          allowed: true,
+          requiresHumanApproval: true,
+          reason:
+            "Suspending an expert is consequential; a human must approve. Never auto-suspended.",
         });
       default:
         // Exhaustive over the contract union; this guards untrusted/forged shapes.

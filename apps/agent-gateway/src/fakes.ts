@@ -9,9 +9,12 @@ import type {
   ApprovalQueue,
   AuditSink,
   ExecutorPorts,
+  ExpertSuspendAction,
+  FlagForReReviewAction,
   LeadUpsertAction,
   OutreachDraftAction,
   PayoutCreateAction,
+  SlaBreachAlertAction,
 } from "./ports";
 
 /** Append-only in-memory audit trail for demo/tests. */
@@ -35,6 +38,9 @@ export class RecordingExecutors implements ExecutorPorts {
   public readonly persistedLeads: LeadUpsertAction[] = [];
   public readonly draftedOutreach: OutreachDraftAction[] = [];
   public readonly payouts: PayoutCreateAction[] = [];
+  public readonly reReviewFlags: FlagForReReviewAction[] = [];
+  public readonly suspendedExperts: ExpertSuspendAction[] = [];
+  public readonly slaAlerts: SlaBreachAlertAction[] = [];
 
   async persistLead(action: LeadUpsertAction): Promise<void> {
     this.persistedLeads.push(action);
@@ -44,6 +50,16 @@ export class RecordingExecutors implements ExecutorPorts {
   }
   async createPayout(action: PayoutCreateAction): Promise<void> {
     this.payouts.push(action);
+  }
+  async flagForReReview(action: FlagForReReviewAction): Promise<void> {
+    this.reReviewFlags.push(action);
+  }
+  async suspendExpert(action: ExpertSuspendAction): Promise<void> {
+    // Should never be reached under the default policy (always human-gated).
+    this.suspendedExperts.push(action);
+  }
+  async emitSlaAlert(action: SlaBreachAlertAction): Promise<void> {
+    this.slaAlerts.push(action);
   }
 }
 

@@ -243,6 +243,17 @@ export class Gateway {
       case "payout.create":
         await this.executors.createPayout(action);
         return;
+      case "flag_for_re_review":
+        await this.executors.flagForReReview(action);
+        return;
+      case "expert_suspend":
+        // Policy ALWAYS human-gates this, so it is parked in the approval queue
+        // and never reaches here. Fail-closed regardless.
+        await this.executors.suspendExpert(action);
+        return;
+      case "sla_breach_alert":
+        await this.executors.emitSlaAlert(action);
+        return;
       default:
         // Unreachable for valid contract input; fail-closed regardless.
         throw new Error("No executor for action type.");
@@ -266,6 +277,12 @@ function resourceTypeFor(action: ProposedAction): string {
       return "outreach";
     case "payout.create":
       return "payout";
+    case "flag_for_re_review":
+      return "answer";
+    case "expert_suspend":
+      return "expert";
+    case "sla_breach_alert":
+      return "question";
     default:
       return "unknown";
   }
@@ -279,6 +296,12 @@ function resourceIdFor(action: ProposedAction): string | null {
       return action.leadId;
     case "payout.create":
       return action.answerId;
+    case "flag_for_re_review":
+      return action.answerId;
+    case "expert_suspend":
+      return action.expertId;
+    case "sla_breach_alert":
+      return action.questionId;
     default:
       return null;
   }
