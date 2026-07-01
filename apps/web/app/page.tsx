@@ -1,5 +1,7 @@
-import { SkillDoctor } from "./SkillDoctor";
+import { Keynote } from "./Keynote";
+
+export const dynamic = "force-dynamic";
 
 export default function Home() {
-  return <SkillDoctor />;
+  return <Keynote />;
 }
