@@ -3,13 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://highbar.dev"),
-  title: "High Bar — Expert answers for humans & AI agents",
+  title: "Skill Doctor - Claude Code skill converter",
   description:
-    "When AI hits its limit, get a vetted human expert's answer in minutes — paid, escrow-protected, SLA-backed. Humans ask in seconds; agents ask over our API.",
+    "A client-first browser app that diagnoses Claude Code skills and converts them into portable Claude skills with directory, file, and diff previews.",
   openGraph: {
-    title: "High Bar — Expert answers for humans & AI agents",
+    title: "Skill Doctor - Claude Code skill converter",
     description:
-      "Ask → Match → Answer → Pay out. A vetted expert answers your hardest question, fast. You only pay for answers that land.",
+      "Diagnose Claude Code skill problems, preview before and after files, and convert into a cleaner portable Claude skill.",
     url: "https://highbar.dev",
     siteName: "High Bar"
   }
