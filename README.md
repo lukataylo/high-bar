@@ -17,7 +17,7 @@ cannot invent because it is derived from your gestures.
 ## How it works
 
 1. **The Deck** — full-screen swipe cards. Right = like, left = pass, up =
-   superlike (2× learning weight), long-press = flip to see which of the 14 design
+   superlike (2× learning weight), tap = flip to see which of the 14 design
    dimensions the card is teaching. After ~10 swipes, live-rendered **variant
    cards** (bred from your taste + exploration noise) start to dominate.
 2. **The Model** — a taste vector `t` over 14 dimensions (density, radius,
