@@ -67,24 +67,23 @@ export default function App() {
     const top = queue[0];
     if (!top) return;
 
-    setState((prev) => {
-      const event: SwipeEvent = {
-        cardId: top.id,
-        cardKind: top.kind,
-        direction,
-        attrs: top.attrs,
-        hue: top.hue,
-        at: Date.now(),
-      };
-      const next = applySwipe(prev, event);
-      setQueue((q) => {
-        const remaining = q.slice(1);
-        return producedRef.current < SESSION_CARD_COUNT
-          ? [...remaining, produceCard(next)]
-          : remaining;
-      });
-      return next;
-    });
+    const event: SwipeEvent = {
+      cardId: top.id,
+      cardKind: top.kind,
+      direction,
+      attrs: top.attrs,
+      hue: top.hue,
+      at: Date.now(),
+    };
+    const next = applySwipe(state, event);
+    const remaining = queue.slice(1);
+
+    setState(next);
+    setQueue(
+      producedRef.current < SESSION_CARD_COUNT
+        ? [...remaining, produceCard(next)]
+        : remaining,
+    );
   }
 
   function generate() {
