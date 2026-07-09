@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DIMENSION_KEYS, neutralVector } from "./dimensions";
-import { applySwipe, confidence, initialState, learningRate, likedHue } from "./model";
+import { applySwipe, confidence, initialState, learningRate, likedHue, replaySwipes } from "./model";
 import { tokensFromTaste } from "./tokens";
 import { generateTasteFile } from "./tasteFile";
 import { styleName } from "./name";
@@ -58,6 +58,17 @@ describe("model", () => {
     const h = likedHue(s);
     // circular mean of 350 and 10 is 0/360, not 180
     expect(Math.min(h, 360 - h)).toBeLessThan(2);
+  });
+
+  it("replays the swipe trail exactly after an undo", () => {
+    const attrs = { ...neutralVector(), radius: 0.9, mode: 0.8 };
+    const first = { cardId: "r1", cardKind: "inspiration" as const, direction: "like" as const, attrs, hue: 280, at: 1 };
+    const second = { cardId: "r2", cardKind: "variant" as const, direction: "pass" as const, attrs, hue: 40, at: 2 };
+    const afterFirst = applySwipe(initialState(), first);
+    const afterBoth = replaySwipes([first, second]);
+    const afterUndo = replaySwipes(afterBoth.swipes.slice(0, -1));
+
+    expect(afterUndo).toEqual(afterFirst);
   });
 });
 

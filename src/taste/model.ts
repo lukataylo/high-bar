@@ -99,6 +99,13 @@ export function applySwipe(state: TasteState, event: SwipeEvent): TasteState {
   };
 }
 
+// Rebuild taste from the audit trail. Undo uses this rather than trying to
+// reverse the learning formula, keeping liked-value confidence and hue history
+// exactly consistent with the remaining swipes.
+export function replaySwipes(events: SwipeEvent[]): TasteState {
+  return events.reduce(applySwipe, initialState());
+}
+
 function variance(values: number[]): number {
   if (values.length < 2) return 1; // unknown => treat as max spread
   const mean = values.reduce((s, v) => s + v, 0) / values.length;

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { orderedCorpus, type InspirationCard } from "./corpus/corpus";
 import {
@@ -7,6 +7,7 @@ import {
   initialState,
   likedHue,
   overallConfidence,
+  replaySwipes,
   type SwipeDirection,
   type SwipeEvent,
   type TasteState,
@@ -27,15 +28,29 @@ const SESSION_CARD_COUNT = 30;
 
 type Tab = "swipe" | "compass";
 
+interface DeckHistoryEntry {
+  card: DeckCard;
+  replacementAdded: boolean;
+}
+
+interface MotionPermissionDeviceEvent extends EventTarget {
+  requestPermission?: () => Promise<"granted" | "denied">;
+}
+
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [state, setState] = useState<TasteState>(initialState);
   const [tab, setTab] = useState<Tab>("swipe");
   const [tasteFile, setTasteFile] = useState<TasteFile | null>(null);
+  const [deckHistory, setDeckHistory] = useState<DeckHistoryEntry[]>([]);
+  const [undoNotice, setUndoNotice] = useState(false);
 
   const producedRef = useRef(0);
   const inspIdxRef = useRef(0);
   const variantIdxRef = useRef(0);
+  const lastMotionRef = useRef({ x: 0, y: 0, z: 0 });
+  const lastShakeRef = useRef(0);
+  const undoTimerRef = useRef<number | null>(null);
 
   const produceCard = useRef((from: TasteState): DeckCard => {
     const produced = producedRef.current;
@@ -78,13 +93,88 @@ export default function App() {
     };
     const next = applySwipe(state, event);
     const remaining = queue.slice(1);
+    const replacementAdded = producedRef.current < SESSION_CARD_COUNT;
 
+    setDeckHistory((history) => [...history, { card: top, replacementAdded }]);
     setState(next);
     setQueue(
-      producedRef.current < SESSION_CARD_COUNT
+      replacementAdded
         ? [...remaining, produceCard(next)]
         : remaining,
     );
+  }
+
+  const undoLastSwipe = useCallback(() => {
+    const previous = deckHistory[deckHistory.length - 1];
+    if (!previous) return;
+
+    let restoredQueue = [previous.card, ...queue];
+    if (previous.replacementAdded) {
+      const discarded = queue[queue.length - 1];
+      restoredQueue = [previous.card, ...queue.slice(0, -1)];
+      producedRef.current = Math.max(VISIBLE_STACK, producedRef.current - 1);
+      if (discarded?.kind === "variant") {
+        variantIdxRef.current = Math.max(0, variantIdxRef.current - 1);
+      } else if (discarded) {
+        inspIdxRef.current = Math.max(0, inspIdxRef.current - 1);
+      }
+    }
+
+    setQueue(restoredQueue);
+    setDeckHistory((history) => history.slice(0, -1));
+    setState(replaySwipes(state.swipes.slice(0, -1)));
+    setUndoNotice(true);
+    if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = window.setTimeout(() => setUndoNotice(false), 1400);
+  }, [deckHistory, queue, state.swipes]);
+
+  useEffect(() => {
+    if (showOnboarding) return;
+
+    const onMotion = (event: DeviceMotionEvent) => {
+      const acceleration = event.accelerationIncludingGravity;
+      if (!acceleration) return;
+
+      const current = {
+        x: acceleration.x ?? 0,
+        y: acceleration.y ?? 0,
+        z: acceleration.z ?? 0,
+      };
+      const previous = lastMotionRef.current;
+      const force =
+        Math.abs(current.x - previous.x) +
+        Math.abs(current.y - previous.y) +
+        Math.abs(current.z - previous.z);
+      lastMotionRef.current = current;
+
+      const now = Date.now();
+      if (force > 28 && now - lastShakeRef.current > 1200) {
+        lastShakeRef.current = now;
+        undoLastSwipe();
+      }
+    };
+
+    window.addEventListener("devicemotion", onMotion);
+    return () => window.removeEventListener("devicemotion", onMotion);
+  }, [showOnboarding, undoLastSwipe]);
+
+  useEffect(
+    () => () => {
+      if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
+    },
+    [],
+  );
+
+  async function beginSession() {
+    const motion = DeviceMotionEvent as unknown as MotionPermissionDeviceEvent;
+    if (typeof motion.requestPermission === "function") {
+      try {
+        await motion.requestPermission();
+      } catch {
+        // Motion permission is optional; the deck remains fully usable.
+      }
+    }
+    setShowOnboarding(false);
   }
 
   function generate() {
@@ -140,10 +230,10 @@ export default function App() {
             breeding new designs around your taste.
           </p>
         </div>
-        <button className="start-button" onClick={() => setShowOnboarding(false)}>
+        <button className="start-button" onClick={beginSession}>
           Start swiping <span>→</span>
         </button>
-        <small className="onboarding-foot">30 cards · about 2 minutes</small>
+        <small className="onboarding-foot">30 cards · about 2 minutes · shake to undo</small>
       </div>
     );
   }
@@ -245,6 +335,11 @@ export default function App() {
       )}
 
       {tasteFile && <TasteFileModal file={tasteFile} onClose={() => setTasteFile(null)} />}
+      {undoNotice && (
+        <div className="undo-toast" role="status" aria-live="polite">
+          ↶ Last swipe undone
+        </div>
+      )}
     </div>
   );
 }
