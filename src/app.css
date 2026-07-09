@@ -13,7 +13,7 @@
 }
 
 .mirror-panel {
-  padding: 6px 14px 10px;
+  padding: 8px 14px 12px;
 }
 
 .mirror-tag {
@@ -21,7 +21,7 @@
   align-items: center;
   gap: 7px;
   font-size: 11px;
-  color: #8a8a99;
+  color: #a3a3a3;
   font-weight: 600;
   margin-bottom: 6px;
 }
@@ -30,29 +30,29 @@
   width: 7px;
   height: 7px;
   border-radius: 999px;
-  background: #4ade80;
-  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+  background: #8b5cf6;
+  box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5);
   animation: pulse 1.8s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 7px rgba(74, 222, 128, 0);
+    box-shadow: 0 0 0 7px rgba(139, 92, 246, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
   }
 }
 
 .mirror-frame {
-  height: 200px;
-  border-radius: 18px;
+  height: 285px;
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
 }
 
 .mirror-frame .mirror {
@@ -64,7 +64,7 @@
 .deck {
   position: relative;
   flex: 1;
-  margin: 4px 18px 0;
+  margin: 2px 18px 0;
   min-height: 0;
 }
 
@@ -98,9 +98,9 @@
   backface-visibility: hidden;
   border-radius: 22px;
   overflow: hidden;
-  background: #101018;
+  background: #121212;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
 }
@@ -120,8 +120,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px 14px;
-  background: #101018;
+  padding: 10px 14px 12px;
+  background: #121212;
   border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
@@ -132,7 +132,7 @@
 
 .card-tagline {
   font-size: 12px;
-  color: #8a8a99;
+  color: #737373;
   margin-top: 2px;
 }
 
@@ -142,13 +142,22 @@
   letter-spacing: 0.08em;
   padding: 4px 8px;
   border-radius: 8px;
-  background: rgba(126, 232, 250, 0.16);
-  color: #7ee8fa;
+  background: rgba(139, 92, 246, 0.16);
+  color: #a78bfa;
+  margin-left: 8px;
 }
 
 .card-badge.off {
-  background: rgba(255, 95, 109, 0.16);
-  color: #ff8b95;
+  background: rgba(255, 255, 255, 0.08);
+  color: #a3a3a3;
+}
+
+.card-tap-hint {
+  margin-left: auto;
+  color: #a78bfa;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* swipe stamps */
@@ -166,37 +175,37 @@
 
 .stamp.like {
   right: 20px;
-  color: #4ade80;
-  border-color: #4ade80;
+  color: #a78bfa;
+  border-color: #a78bfa;
   transform: rotate(14deg);
 }
 
 .stamp.pass {
   left: 20px;
-  color: #ff5f6d;
-  border-color: #ff5f6d;
+  color: #e5e5e5;
+  border-color: #e5e5e5;
   transform: rotate(-14deg);
 }
 
 .stamp.super {
   left: 50%;
   transform: translateX(-50%);
-  color: #7ee8fa;
-  border-color: #7ee8fa;
+  color: #8b5cf6;
+  border-color: #8b5cf6;
 }
 
 /* card back */
 .card-back {
   transform: rotateY(180deg);
   padding: 22px 20px;
-  background: linear-gradient(160deg, #14141e, #0b0b12);
+  background: #121212;
 }
 
 .card-back-title {
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #7ee8fa;
+  color: #a78bfa;
   font-weight: 700;
 }
 
@@ -221,7 +230,7 @@
 
 .teach-label {
   font-size: 12px;
-  color: #8a8a99;
+  color: #737373;
   font-weight: 600;
 }
 
@@ -235,7 +244,7 @@
 .teach-fill {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, #7ee8fa, #ffc371);
+  background: #8b5cf6;
   border-radius: 999px;
 }
 
@@ -263,17 +272,17 @@
   align-items: center;
   justify-content: center;
   gap: 20px;
-  padding: 16px 0 22px;
+  padding: 12px 0 18px;
 }
 
 .act {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 999px;
   font-size: 22px;
   display: grid;
   place-items: center;
-  background: #16161f;
+  background: #151515;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   transition: transform 0.12s ease;
@@ -284,15 +293,15 @@
 }
 
 .act.pass {
-  color: #ff5f6d;
+  color: #a3a3a3;
 }
 .act.like {
-  color: #4ade80;
-  width: 62px;
-  height: 62px;
+  color: #a78bfa;
+  width: 58px;
+  height: 58px;
 }
 .act.super {
-  color: #7ee8fa;
+  color: #8b5cf6;
   font-size: 20px;
 }
 
@@ -314,7 +323,7 @@
   font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7ee8fa;
+  color: #a78bfa;
   font-weight: 700;
 }
 
@@ -323,10 +332,7 @@
   font-weight: 800;
   letter-spacing: -0.02em;
   margin: 6px 0 4px;
-  background: linear-gradient(135deg, #ffc371, #7ee8fa, #b06ab3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
 .fp-meta {
@@ -353,7 +359,7 @@
 
 .fp-type {
   width: 100%;
-  background: #101018;
+  background: #121212;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   padding: 14px 16px;
@@ -389,9 +395,9 @@
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 999px;
-  background: rgba(255, 195, 113, 0.14);
-  color: #ffc371;
-  border: 1px solid rgba(255, 195, 113, 0.28);
+  background: rgba(139, 92, 246, 0.14);
+  color: #a78bfa;
+  border: 1px solid rgba(139, 92, 246, 0.28);
 }
 
 .fp-generate {
@@ -400,9 +406,9 @@
   border-radius: 16px;
   font-weight: 700;
   font-size: 15px;
-  color: #0b0b0f;
-  background: linear-gradient(135deg, #ffc371, #7ee8fa);
-  box-shadow: 0 12px 30px rgba(126, 232, 250, 0.25);
+  color: #ffffff;
+  background: #7c3aed;
+  box-shadow: none;
 }
 
 .fp-generate code {
@@ -450,7 +456,7 @@
   font-size: 10px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #7ee8fa;
+  color: #a78bfa;
   font-weight: 700;
 }
 
@@ -476,7 +482,7 @@
   font-family: "IBM Plex Mono", monospace;
   font-size: 11.5px;
   line-height: 1.55;
-  color: #cfe9ff;
+  color: #e5e5e5;
   white-space: pre-wrap;
   word-break: break-word;
   flex: 1;
@@ -499,8 +505,8 @@
 }
 
 .modal-btn.primary {
-  background: linear-gradient(135deg, #ffc371, #7ee8fa);
-  color: #0b0b0f;
+  background: #7c3aed;
+  color: #ffffff;
 }
 
 .modal-foot {

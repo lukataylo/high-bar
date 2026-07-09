@@ -24,7 +24,7 @@ const INSPIRATION = orderedCorpus();
 const VARIANTS_START = 10; // variants begin appearing after ~10 swipes
 const STACK = 3;
 
-type Tab = "swipe" | "fingerprint";
+type Tab = "swipe" | "compass";
 
 export default function App() {
   const [state, setState] = useState<TasteState>(initialState);
@@ -108,10 +108,10 @@ export default function App() {
           Swipe
         </button>
         <button
-          className={`tab${tab === "fingerprint" ? " active" : ""}`}
-          onClick={() => setTab("fingerprint")}
+          className={`tab${tab === "compass" ? " active" : ""}`}
+          onClick={() => setTab("compass")}
         >
-          Fingerprint
+          Style Compass
         </button>
       </div>
 
@@ -119,7 +119,7 @@ export default function App() {
         <div className="swipe-view">
           <div className="mirror-panel">
             <div className="mirror-tag">
-              <span className="mirror-live" /> live preview · restyles as you swipe
+              <span className="mirror-live" /> your live app · restyles as you swipe
             </div>
             <div className="mirror-frame">
               <MockUI tokens={tokens} layout="dashboard" />

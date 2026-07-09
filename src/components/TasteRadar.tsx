@@ -8,7 +8,7 @@ interface Props {
 }
 
 // Radar chart of the 14 dimensions. SVG, no chart lib needed.
-export function TasteRadar({ taste, confidence, size = 240, color = "#7ee8fa" }: Props) {
+export function TasteRadar({ taste, confidence, size = 240, color = "#8b5cf6" }: Props) {
   const cx = size / 2;
   const cy = size / 2;
   const r = size / 2 - 34;
@@ -45,7 +45,7 @@ export function TasteRadar({ taste, confidence, size = 240, color = "#7ee8fa" }:
       {DIMENSIONS.map((d, i) => {
         const [px, py] = point(i, r * Math.max(0.04, taste[d.key]));
         const locked = confidence && confidence[d.key] > 0.66;
-        return <circle key={d.key} cx={px} cy={py} r={locked ? 4 : 2.5} fill={locked ? "#ffc371" : color} />;
+        return <circle key={d.key} cx={px} cy={py} r={locked ? 4 : 2.5} fill={locked ? "#c4b5fd" : color} />;
       })}
       {DIMENSIONS.map((d, i) => {
         const [lx, ly] = point(i, r + 16);

@@ -29,7 +29,7 @@ export function TasteCard({ taste, confidence, tokens, hue, swipeCount, overall,
   return (
     <div className="fingerprint">
       <div className="fp-header">
-        <div className="fp-eyebrow">Your taste fingerprint</div>
+        <div className="fp-eyebrow">Your Style Compass</div>
         <div className="fp-name" style={{ fontFamily: pairing.display }}>
           {name}
         </div>

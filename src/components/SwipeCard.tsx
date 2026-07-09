@@ -28,7 +28,6 @@ export function SwipeCard({ card, isTop, offset, onSwipe }: Props) {
   const superOpacity = useTransform(y, [-SWIPE_UP, -30], [1, 0]);
 
   const [flipped, setFlipped] = useState(false);
-  const [pressTimer, setPressTimer] = useState<number | null>(null);
 
   const layout = card.kind === "inspiration" ? card.layout : "dashboard";
   const tokens = tokensFromTaste(card.attrs, card.hue);
@@ -45,17 +44,6 @@ export function SwipeCard({ card, isTop, offset, onSwipe }: Props) {
     } else {
       x.set(0);
       y.set(0);
-    }
-  }
-
-  function startPress() {
-    const id = window.setTimeout(() => setFlipped((f) => !f), 380);
-    setPressTimer(id);
-  }
-  function endPress() {
-    if (pressTimer) {
-      window.clearTimeout(pressTimer);
-      setPressTimer(null);
     }
   }
 
@@ -81,9 +69,9 @@ export function SwipeCard({ card, isTop, offset, onSwipe }: Props) {
       dragSnapToOrigin
       dragElastic={0.7}
       onDragEnd={handleDragEnd}
-      onPointerDown={startPress}
-      onPointerUp={endPress}
-      onPointerCancel={endPress}
+      onTap={() => {
+        if (isTop) setFlipped((value) => !value);
+      }}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ x: x.get() > 0 ? 400 : x.get() < 0 ? -400 : 0, y: y.get() < -50 ? -500 : 0, opacity: 0 }}
@@ -99,6 +87,7 @@ export function SwipeCard({ card, isTop, offset, onSwipe }: Props) {
               <div className="card-name">{card.name}</div>
               <div className="card-tagline">{card.tagline}</div>
             </div>
+            <span className="card-tap-hint">Tap for style</span>
             {card.kind === "variant" && (
               <span className={`card-badge${card.offTaste ? " off" : ""}`}>
                 {card.offTaste ? "PROBE" : "BRED"}
@@ -138,7 +127,7 @@ export function SwipeCard({ card, isTop, offset, onSwipe }: Props) {
               );
             })}
           </div>
-          <div className="card-back-hint">long-press to flip back</div>
+          <div className="card-back-hint">tap to flip back</div>
         </div>
       </div>
     </motion.div>
