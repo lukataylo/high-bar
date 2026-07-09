@@ -21,7 +21,8 @@ import { TasteFileModal } from "./components/TasteFileModal";
 
 const INSPIRATION = orderedCorpus();
 const VARIANTS_START = 10; // variants begin appearing after ~10 swipes
-const STACK = 3;
+const VISIBLE_STACK = 3;
+const SESSION_CARD_COUNT = 30;
 
 type Tab = "swipe" | "compass";
 
@@ -53,7 +54,7 @@ export default function App() {
 
   const [queue, setQueue] = useState<DeckCard[]>(() => {
     const initial = initialState();
-    return Array.from({ length: STACK }, () => produceCard(initial));
+    return Array.from({ length: VISIBLE_STACK }, () => produceCard(initial));
   });
 
   const hue = likedHue(state);
@@ -75,7 +76,12 @@ export default function App() {
         at: Date.now(),
       };
       const next = applySwipe(prev, event);
-      setQueue((q) => [...q.slice(1), produceCard(next)]);
+      setQueue((q) => {
+        const remaining = q.slice(1);
+        return producedRef.current < SESSION_CARD_COUNT
+          ? [...remaining, produceCard(next)]
+          : remaining;
+      });
       return next;
     });
   }
@@ -85,7 +91,15 @@ export default function App() {
   }
 
   const variantsActive = producedRef.current > VARIANTS_START;
-  const phase = state.swipes.length < VARIANTS_START ? "Learning" : variantsActive ? "Breeding" : "Learning";
+  const cardsRemaining = SESSION_CARD_COUNT - state.swipes.length;
+  const phase =
+    cardsRemaining === 0
+      ? "Complete"
+      : state.swipes.length < VARIANTS_START
+        ? "Learning"
+        : variantsActive
+          ? "Breeding"
+          : "Learning";
 
   return (
     <div className="app">
@@ -119,10 +133,16 @@ export default function App() {
             </div>
           </div>
 
+          <div className="deck-header">
+            <span>Style cards</span>
+            <span>{cardsRemaining} remaining</span>
+          </div>
+
           <div className="deck">
             <AnimatePresence>
-              {queue
-                .slice(0, STACK)
+              {queue.length > 0 ? (
+                queue
+                .slice(0, VISIBLE_STACK)
                 .map((card, i) => (
                   <SwipeCard
                     key={card.id}
@@ -132,21 +152,29 @@ export default function App() {
                     onSwipe={handleSwipe}
                   />
                 ))
-                .reverse()}
+                .reverse()
+              ) : (
+                <div className="deck-complete">
+                  <div className="deck-complete-title">Your style is ready</div>
+                  <button onClick={() => setTab("compass")}>Open Style Compass</button>
+                </div>
+              )}
             </AnimatePresence>
           </div>
 
-          <div className="deck-actions">
-            <button className="act pass" onClick={() => handleSwipe("pass")} aria-label="Pass">
-              ✕
-            </button>
-            <button className="act super" onClick={() => handleSwipe("superlike")} aria-label="Superlike">
-              ★
-            </button>
-            <button className="act like" onClick={() => handleSwipe("like")} aria-label="Like">
-              ♥
-            </button>
-          </div>
+          {queue.length > 0 && (
+            <div className="deck-actions">
+              <button className="act pass" onClick={() => handleSwipe("pass")} aria-label="Pass">
+                ✕
+              </button>
+              <button className="act super" onClick={() => handleSwipe("superlike")} aria-label="Superlike">
+                ★
+              </button>
+              <button className="act like" onClick={() => handleSwipe("like")} aria-label="Like">
+                ♥
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="fingerprint-view">
