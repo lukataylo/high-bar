@@ -1,0 +1,206 @@
+/* Enhancements for the Expert PWA. Co-located module — no globals.css edits. */
+
+/* ---- Live countdown chip ---- */
+.countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.countdownTime {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.countdownLeft {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+
+.normal {
+  background: color-mix(in srgb, var(--timeline-read) 28%, transparent);
+  color: #2f5688;
+}
+
+.warn {
+  background: color-mix(in srgb, var(--timeline-done) 30%, transparent);
+  color: #8a5a16;
+}
+
+.urgent {
+  background: color-mix(in srgb, var(--error) 16%, transparent);
+  color: var(--error);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.expired {
+  background: color-mix(in srgb, var(--error) 22%, transparent);
+  color: var(--error);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .urgent {
+    animation: none;
+  }
+}
+
+/* ---- Bounty (what the expert earns) ---- */
+.bounty {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bountyLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bountyAmount {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--primary);
+  letter-spacing: -0.01em;
+}
+
+.bountyAmountSm {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--primary);
+}
+
+/* ---- Swipe card footer (bounty + clock) ---- */
+.cardFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin: auto 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline-soft);
+}
+
+.cardClock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.cardSla {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---- Drag affordance (ANSWER / PASS) ---- */
+.tint {
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+}
+
+.tintAnswer {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--success) 22%, transparent),
+    transparent 60%
+  );
+}
+
+.tintPass {
+  background: linear-gradient(
+    200deg,
+    color-mix(in srgb, var(--error) 22%, transparent),
+    transparent 60%
+  );
+}
+
+.affordance {
+  position: absolute;
+  top: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 3px solid currentColor;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  background: var(--surface-card);
+}
+
+.affordanceAnswer {
+  right: 18px;
+  color: var(--success);
+  transform: rotate(11deg);
+}
+
+.affordancePass {
+  left: 18px;
+  color: var(--error);
+  transform: rotate(-11deg);
+}
+
+/* ---- Deck keyboard focus ---- */
+.deckFocus:focus-visible {
+  outline: none;
+}
+
+.deckFocus:focus-visible .topHighlight {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent),
+    0 18px 40px -28px rgba(38, 37, 30, 0.5);
+}
+
+/* ---- Answers tab: clock + bounty row ---- */
+.answerClockRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--canvas);
+  border: 1px solid var(--hairline-soft);
+}
+
+.answerBounty {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
