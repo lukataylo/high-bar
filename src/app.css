@@ -1,0 +1,512 @@
+.mini-radar {
+  width: 54px;
+  height: 54px;
+  opacity: 0.9;
+}
+
+/* ---- Swipe view ---- */
+.swipe-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mirror-panel {
+  padding: 6px 14px 10px;
+}
+
+.mirror-tag {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: #8a8a99;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.mirror-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #4ade80;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
+  animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(74, 222, 128, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+  }
+}
+
+.mirror-frame {
+  height: 200px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.mirror-frame .mirror {
+  height: 100%;
+  overflow: auto;
+}
+
+/* ---- Deck ---- */
+.deck {
+  position: relative;
+  flex: 1;
+  margin: 4px 18px 0;
+  min-height: 0;
+}
+
+.swipe-card {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  will-change: transform;
+  cursor: grab;
+}
+
+.swipe-card:active {
+  cursor: grabbing;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #101018;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-preview {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.card-preview .mirror {
+  height: 100%;
+  width: 100%;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px 14px;
+  background: #101018;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.card-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.card-tagline {
+  font-size: 12px;
+  color: #8a8a99;
+  margin-top: 2px;
+}
+
+.card-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: rgba(126, 232, 250, 0.16);
+  color: #7ee8fa;
+}
+
+.card-badge.off {
+  background: rgba(255, 95, 109, 0.16);
+  color: #ff8b95;
+}
+
+/* swipe stamps */
+.stamp {
+  position: absolute;
+  top: 22px;
+  padding: 6px 14px;
+  border: 3px solid;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.stamp.like {
+  right: 20px;
+  color: #4ade80;
+  border-color: #4ade80;
+  transform: rotate(14deg);
+}
+
+.stamp.pass {
+  left: 20px;
+  color: #ff5f6d;
+  border-color: #ff5f6d;
+  transform: rotate(-14deg);
+}
+
+.stamp.super {
+  left: 50%;
+  transform: translateX(-50%);
+  color: #7ee8fa;
+  border-color: #7ee8fa;
+}
+
+/* card back */
+.card-back {
+  transform: rotateY(180deg);
+  padding: 22px 20px;
+  background: linear-gradient(160deg, #14141e, #0b0b12);
+}
+
+.card-back-title {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #7ee8fa;
+  font-weight: 700;
+}
+
+.card-back-sub {
+  color: #c9c9d4;
+  margin: 8px 0 18px;
+  font-size: 14px;
+}
+
+.teach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.teach-row {
+  display: grid;
+  grid-template-columns: 82px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.teach-label {
+  font-size: 12px;
+  color: #8a8a99;
+  font-weight: 600;
+}
+
+.teach-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.teach-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #7ee8fa, #ffc371);
+  border-radius: 999px;
+}
+
+.teach-val {
+  font-size: 11px;
+  color: #e9e9ee;
+  font-weight: 600;
+  min-width: 62px;
+  text-align: right;
+}
+
+.card-back-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  color: #55555f;
+}
+
+/* ---- Deck action buttons ---- */
+.deck-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 0 22px;
+}
+
+.act {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  background: #16161f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.12s ease;
+}
+
+.act:active {
+  transform: scale(0.9);
+}
+
+.act.pass {
+  color: #ff5f6d;
+}
+.act.like {
+  color: #4ade80;
+  width: 62px;
+  height: 62px;
+}
+.act.super {
+  color: #7ee8fa;
+  font-size: 20px;
+}
+
+/* ---- Fingerprint view ---- */
+.fingerprint-view {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 20px 30px;
+}
+
+.fingerprint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.fp-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7ee8fa;
+  font-weight: 700;
+}
+
+.fp-name {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 6px 0 4px;
+  background: linear-gradient(135deg, #ffc371, #7ee8fa, #b06ab3);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.fp-meta {
+  font-size: 12px;
+  color: #8a8a99;
+}
+
+.fp-radar {
+  margin: 6px 0;
+}
+
+.fp-palette {
+  display: flex;
+  gap: 8px;
+  margin: 4px 0 18px;
+}
+
+.fp-swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.fp-type {
+  width: 100%;
+  background: #101018;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.fp-type-label {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8a99;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.fp-type-fonts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.fp-locked {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.fp-lock-chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 195, 113, 0.14);
+  color: #ffc371;
+  border: 1px solid rgba(255, 195, 113, 0.28);
+}
+
+.fp-generate {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  color: #0b0b0f;
+  background: linear-gradient(135deg, #ffc371, #7ee8fa);
+  box-shadow: 0 12px 30px rgba(126, 232, 250, 0.25);
+}
+
+.fp-generate code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.18);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+/* ---- Modal ---- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 3, 6, 0.72);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 84dvh;
+  background: #0d0d14;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.modal-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #7ee8fa;
+  font-weight: 700;
+}
+
+.modal-title {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 3px;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #c9c9d4;
+}
+
+.modal-code {
+  margin: 0;
+  padding: 16px 18px;
+  overflow: auto;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #cfe9ff;
+  white-space: pre-wrap;
+  word-break: break-word;
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.07);
+  color: #e9e9ee;
+}
+
+.modal-btn.primary {
+  background: linear-gradient(135deg, #ffc371, #7ee8fa);
+  color: #0b0b0f;
+}
+
+.modal-foot {
+  margin: 0;
+  padding: 0 18px 16px;
+  font-size: 12px;
+  color: #8a8a99;
+  line-height: 1.5;
+}
