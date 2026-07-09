@@ -39,7 +39,14 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #0a0a0a;
+  background: linear-gradient(
+    180deg,
+    #08080a 0%,
+    #111015 24%,
+    #292433 55%,
+    #ddd9e4 82%,
+    #f1eef4 100%
+  );
 }
 
 .topbar {
