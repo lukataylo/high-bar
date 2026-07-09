@@ -28,6 +28,7 @@ const SESSION_CARD_COUNT = 30;
 type Tab = "swipe" | "compass";
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(true);
   const [state, setState] = useState<TasteState>(initialState);
   const [tab, setTab] = useState<Tab>("swipe");
   const [tasteFile, setTasteFile] = useState<TasteFile | null>(null);
@@ -101,6 +102,52 @@ export default function App() {
           ? "Breeding"
           : "Learning";
 
+  if (showOnboarding) {
+    return (
+      <div className="app onboarding">
+        <div className="onboarding-logo">
+          <SlopOffLogo />
+        </div>
+        <div className="onboarding-copy">
+          <span className="onboarding-kicker">Taste Engine</span>
+          <h1>Train your taste.<br />Fix the slop.</h1>
+          <p>
+            React to design cards. Your app restyles itself after every choice,
+            then compiles your taste for Cursor.
+          </p>
+        </div>
+        <div className="swipe-guide">
+          <div className="swipe-step">
+            <span className="swipe-icon">←</span>
+            <strong>Pass</strong>
+            <small>Not your style</small>
+          </div>
+          <div className="swipe-step featured">
+            <span className="swipe-icon">→</span>
+            <strong>Keep</strong>
+            <small>More like this</small>
+          </div>
+          <div className="swipe-step">
+            <span className="swipe-icon">↑</span>
+            <strong>Love</strong>
+            <small>2× learning</small>
+          </div>
+        </div>
+        <div className="evolution-note">
+          <span>✦</span>
+          <p>
+            Watch the preview evolve live. After 10 swipes, the deck starts
+            breeding new designs around your taste.
+          </p>
+        </div>
+        <button className="start-button" onClick={() => setShowOnboarding(false)}>
+          Start swiping <span>→</span>
+        </button>
+        <small className="onboarding-foot">30 cards · about 2 minutes</small>
+      </div>
+    );
+  }
+
   return (
     <div className="app">
       <div className="topbar">
@@ -129,7 +176,14 @@ export default function App() {
               Live preview
             </div>
             <div className="mirror-frame">
-              <MockUI tokens={tokens} layout="dashboard" />
+              <div className="browser-bar">
+                <div className="browser-dots"><i /><i /><i /></div>
+                <div className="browser-address">your-app.local</div>
+                <span className="browser-more">•••</span>
+              </div>
+              <div className="browser-content">
+                <MockUI tokens={tokens} layout="dashboard" />
+              </div>
             </div>
           </div>
 

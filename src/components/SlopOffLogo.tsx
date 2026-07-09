@@ -2,31 +2,36 @@ export function SlopOffLogo() {
   return (
     <svg
       className="slop-off-logo"
-      viewBox="0 0 250 76"
+      viewBox="0 0 92 76"
       role="img"
-      aria-label="Slop Off"
+      aria-label="Slop Off ghost"
     >
       <g
         fill="none"
         stroke="#111111"
-        strokeWidth="3"
+        strokeWidth="3.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       >
         <path
           fill="#ffffff"
-          d="M31 55c-7 1-14-2-17-7-2-4 1-7 5-6-2-7-1-17 4-24 6-8 18-10 27-5 8 4 12 13 11 23 6-2 11 0 12 4 1 5-5 8-12 8-2 8-9 14-17 14-6 0-10-4-13-11Z"
+          d="M24 57c-8 1-15-2-19-7-2-4 1-8 6-7-2-8-1-20 5-28C22 6 35 3 45 8c10 5 14 16 13 28 7-2 13 0 14 5 1 6-6 10-14 9-3 9-10 16-19 16-7 0-12-4-15-9Z"
         />
-        <path d="M32 27c3-3 8-3 11 0M34 34c3 2 7 2 10 0" />
-        <circle cx="31" cy="25" r="1.2" fill="#111111" stroke="none" />
-        <circle cx="47" cy="25" r="1.2" fill="#111111" stroke="none" />
-        <path d="M27 55v9M52 54v10" />
-        <path d="M16 42 6 38c-3-1-5 2-3 5l8 6" />
-        <rect x="58" y="31" width="12" height="20" rx="2" fill="#c9ff3d" transform="rotate(12 64 41)" />
-        <path d="m70 20 2-5 2 5 5 2-5 2-2 5-2-5-5-2 5-2ZM227 51l2-6 3 6 6 2-6 3-3 6-2-6-6-3 6-2Z" fill="#c9ff3d" />
+        <circle cx="31" cy="28" r="1.5" fill="#111111" stroke="none" />
+        <circle cx="47" cy="28" r="1.5" fill="#111111" stroke="none" />
+        <path d="M32 36c4 4 10 4 14 0M24 57c-1 6 2 10 8 10M52 56c1 6-2 10-8 10" />
+        <path d="M12 43 3 40c-3-1-4 3-2 5l8 5M58 37l10-5" />
+        <rect
+          x="67"
+          y="26"
+          width="15"
+          height="29"
+          rx="3"
+          fill="#c9ff3d"
+          transform="rotate(12 74.5 40.5)"
+        />
+        <path d="M84 25l2-5M88 29l4-2M83 20l-1-5M79 24l-4-3M73 48c4 0 7 2 8 6M72 52c3 0 5 2 6 5" />
       </g>
-      <text x="82" y="34" className="logo-word">SLOP</text>
-      <text x="96" y="65" className="logo-word">OFF</text>
     </svg>
   );
 }

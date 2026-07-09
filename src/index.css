@@ -55,25 +55,14 @@ button {
 }
 
 .brand {
-  width: 142px;
-  height: 48px;
+  width: 54px;
+  height: 45px;
 }
 
 .slop-off-logo {
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.logo-word {
-  fill: #111111;
-  font-family: "Archivo Black", "Arial Black", sans-serif;
-  font-size: 31px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  paint-order: stroke;
-  stroke: #111111;
-  stroke-width: 1px;
 }
 
 .brand-sub {
@@ -114,6 +103,163 @@ button {
   color: #111111;
   background: #c9ff3d;
   box-shadow: none;
+}
+
+/* ---- Single-screen onboarding ---- */
+.onboarding {
+  align-items: center;
+  justify-content: center;
+  padding: 24px 22px;
+  text-align: center;
+}
+
+.onboarding-logo {
+  width: 92px;
+  height: 76px;
+  margin-bottom: 8px;
+  transform: rotate(-2deg);
+}
+
+.onboarding-logo .slop-off-logo {
+  width: 100%;
+  height: 100%;
+}
+
+.onboarding-copy {
+  max-width: 390px;
+}
+
+.onboarding-kicker {
+  display: inline-block;
+  padding: 4px 9px;
+  color: #6d28d9;
+  border: 2px solid #111111;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 2px 2px 0 #111111;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-1deg);
+}
+
+.onboarding h1 {
+  margin: 13px 0 8px;
+  font-family: "Archivo Black", "Arial Black", sans-serif;
+  font-size: clamp(32px, 9vw, 43px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.onboarding-copy > p {
+  max-width: 350px;
+  margin: 0 auto;
+  color: #514b57;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.swipe-guide {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 22px 0 14px;
+}
+
+.swipe-step {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 5px 10px;
+  background: #ffffff;
+  border: 2px solid #111111;
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 #111111;
+}
+
+.swipe-step.featured {
+  background: #c9ff3d;
+  transform: translateY(-5px) rotate(1deg);
+}
+
+.swipe-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 5px;
+  place-items: center;
+  color: #ffffff;
+  background: #6d28d9;
+  border: 2px solid #111111;
+  border-radius: 999px;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.swipe-step strong {
+  font-size: 13px;
+}
+
+.swipe-step small {
+  color: #615c67;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.evolution-note {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  text-align: left;
+  background: #eee6ff;
+  border: 2px solid #111111;
+  border-radius: 14px;
+}
+
+.evolution-note > span {
+  color: #6d28d9;
+  font-size: 24px;
+}
+
+.evolution-note p {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.start-button {
+  width: 100%;
+  margin-top: 15px;
+  padding: 13px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #111111;
+  background: #c9ff3d;
+  border: 2px solid #111111;
+  border-radius: 999px;
+  box-shadow: 4px 4px 0 #111111;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.start-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #111111;
+}
+
+.onboarding-foot {
+  margin-top: 11px;
+  color: #615c67;
+  font-size: 10px;
+  font-weight: 600;
 }
 
 /* ---- Mirror surface: the only thing the taste tokens restyle ---- */
