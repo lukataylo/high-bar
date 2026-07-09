@@ -18,7 +18,6 @@ import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
 import { TasteCard } from "./components/TasteCard";
 import { TasteFileModal } from "./components/TasteFileModal";
-import { TasteRadar } from "./components/TasteRadar";
 
 const INSPIRATION = orderedCorpus();
 const VARIANTS_START = 10; // variants begin appearing after ~10 swipes
@@ -92,15 +91,9 @@ export default function App() {
     <div className="app">
       <div className="topbar">
         <div className="brand">
-          <span className="brand-dot" />
-          <div>
-            Taste Engine
-            <div className="brand-sub">{phase} · {state.swipes.length} swipes</div>
-          </div>
+          Taste Engine
         </div>
-        <div className="mini-radar">
-          <TasteRadar taste={state.taste} confidence={conf} size={54} />
-        </div>
+        <div className="brand-sub">{phase} · {state.swipes.length} swipes</div>
       </div>
 
       <div className="tabs">
@@ -119,7 +112,7 @@ export default function App() {
         <div className="swipe-view">
           <div className="mirror-panel">
             <div className="mirror-tag">
-              <span className="mirror-live" /> your live app · restyles as you swipe
+              Live preview
             </div>
             <div className="mirror-frame">
               <MockUI tokens={tokens} layout="dashboard" />
