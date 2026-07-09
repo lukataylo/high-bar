@@ -181,16 +181,7 @@ export default function App() {
     setTasteFile(generateTasteFile(state.taste, tokens, hue, state.swipes.length));
   }
 
-  const variantsActive = producedRef.current > VARIANTS_START;
   const cardsRemaining = SESSION_CARD_COUNT - state.swipes.length;
-  const phase =
-    cardsRemaining === 0
-      ? "Complete"
-      : state.swipes.length < VARIANTS_START
-        ? "Learning"
-        : variantsActive
-          ? "Breeding"
-          : "Learning";
 
   if (showOnboarding) {
     return (
@@ -244,7 +235,9 @@ export default function App() {
         <div className="brand">
           <SlopOffLogo />
         </div>
-        <div className="brand-sub">{phase} · {state.swipes.length} swipes</div>
+        <div className="brand-sub">
+          {state.swipes.length} style {state.swipes.length === 1 ? "save" : "saves"}
+        </div>
       </div>
 
       <div className="tabs">
