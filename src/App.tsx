@@ -18,6 +18,7 @@ import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
 import { TasteCard } from "./components/TasteCard";
 import { TasteFileModal } from "./components/TasteFileModal";
+import { SlopOffLogo } from "./components/SlopOffLogo";
 
 const INSPIRATION = orderedCorpus();
 const VARIANTS_START = 10; // variants begin appearing after ~10 swipes
@@ -105,7 +106,7 @@ export default function App() {
     <div className="app">
       <div className="topbar">
         <div className="brand">
-          Taste Engine
+          <SlopOffLogo />
         </div>
         <div className="brand-sub">{phase} · {state.swipes.length} swipes</div>
       </div>

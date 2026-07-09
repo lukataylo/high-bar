@@ -33,13 +33,13 @@ export function TasteRadar({ taste, confidence, size = 240, color = "#8b5cf6" }:
           key={rr}
           points={DIMENSIONS.map((_, i) => point(i, r * rr).join(",")).join(" ")}
           fill="none"
-          stroke="rgba(255,255,255,0.08)"
+          stroke="rgba(17,17,17,0.14)"
           strokeWidth={1}
         />
       ))}
       {DIMENSIONS.map((_, i) => {
         const [px, py] = point(i, r);
-        return <line key={i} x1={cx} y1={cy} x2={px} y2={py} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />;
+        return <line key={i} x1={cx} y1={cy} x2={px} y2={py} stroke="rgba(17,17,17,0.1)" strokeWidth={1} />;
       })}
       <path d={valuePath} fill={color} fillOpacity={0.18} stroke={color} strokeWidth={2} strokeLinejoin="round" />
       {DIMENSIONS.map((d, i) => {
@@ -55,7 +55,7 @@ export function TasteRadar({ taste, confidence, size = 240, color = "#8b5cf6" }:
             x={lx}
             y={ly}
             fontSize={7.5}
-            fill="rgba(255,255,255,0.55)"
+            fill="#514b57"
             textAnchor="middle"
             dominantBaseline="middle"
             fontWeight={600}

@@ -54,7 +54,7 @@ export function TasteCard({ taste, confidence, tokens, hue, swipeCount, overall,
           <span style={{ fontFamily: pairing.display, fontWeight: tokens.fontWeightDisplay, fontSize: 22 }}>
             {pairing.name.split(" / ")[0]}
           </span>
-          <span style={{ fontFamily: pairing.body, fontWeight: tokens.fontWeightBody, color: "#9a9aa8" }}>
+          <span style={{ fontFamily: pairing.body, fontWeight: tokens.fontWeightBody, color: "#615c67" }}>
             {pairing.name.split(" / ")[1] ?? pairing.name}
           </span>
         </div>
