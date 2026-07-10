@@ -19,6 +19,7 @@ import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
 import { TasteCard } from "./components/TasteCard";
 import { TasteFileModal } from "./components/TasteFileModal";
+import { SwipeHistoryModal } from "./components/SwipeHistoryModal";
 import { SlopOffLogo } from "./components/SlopOffLogo";
 
 const INSPIRATION = orderedCorpus();
@@ -44,6 +45,9 @@ export default function App() {
   const [tasteFile, setTasteFile] = useState<TasteFile | null>(null);
   const [deckHistory, setDeckHistory] = useState<DeckHistoryEntry[]>([]);
   const [undoNotice, setUndoNotice] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [addressInput, setAddressInput] = useState("");
 
   const producedRef = useRef(0);
   const inspIdxRef = useRef(0);
@@ -181,6 +185,23 @@ export default function App() {
     setTasteFile(generateTasteFile(state.taste, tokens, hue, state.swipes.length));
   }
 
+  function removeSwipe(index: number) {
+    const remaining = state.swipes.filter((_, i) => i !== index);
+    setState(replaySwipes(remaining));
+    // shake-to-undo tracks the deck by position; an out-of-order removal
+    // invalidates that mapping, so drop it rather than risk restoring the wrong card.
+    setDeckHistory([]);
+  }
+
+  function loadPreview(raw: string) {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      setPreviewUrl(null);
+      return;
+    }
+    setPreviewUrl(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  }
+
   const cardsRemaining = SESSION_CARD_COUNT - state.swipes.length;
 
   if (showOnboarding) {
@@ -235,9 +256,9 @@ export default function App() {
         <div className="brand">
           <SlopOffLogo />
         </div>
-        <div className="brand-sub">
+        <button className="brand-sub" onClick={() => setShowHistory(true)}>
           {state.swipes.length} style {state.swipes.length === 1 ? "save" : "saves"}
-        </div>
+        </button>
       </div>
 
       <div className="tabs">
@@ -261,11 +282,36 @@ export default function App() {
             <div className="mirror-frame">
               <div className="browser-bar">
                 <div className="browser-dots"><i /><i /><i /></div>
-                <div className="browser-address">your-app.local</div>
-                <span className="browser-more">•••</span>
+                <input
+                  className="browser-address"
+                  value={addressInput}
+                  placeholder="your-app.local"
+                  onChange={(e) => setAddressInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    loadPreview(addressInput);
+                    e.currentTarget.blur();
+                  }}
+                  aria-label="Preview URL"
+                />
+                <span
+                  className="browser-more"
+                  role="button"
+                  aria-label="Reset preview"
+                  onClick={() => {
+                    setPreviewUrl(null);
+                    setAddressInput("");
+                  }}
+                >
+                  {previewUrl ? "✕" : "•••"}
+                </span>
               </div>
               <div className="browser-content">
-                <MockUI tokens={tokens} layout="dashboard" />
+                {previewUrl ? (
+                  <iframe className="preview-iframe" src={previewUrl} title="App preview" />
+                ) : (
+                  <MockUI tokens={tokens} layout="dashboard" />
+                )}
               </div>
             </div>
           </div>
@@ -328,6 +374,13 @@ export default function App() {
       )}
 
       {tasteFile && <TasteFileModal file={tasteFile} onClose={() => setTasteFile(null)} />}
+      {showHistory && (
+        <SwipeHistoryModal
+          swipes={state.swipes}
+          onRemove={removeSwipe}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
       {undoNotice && (
         <div className="undo-toast" role="status" aria-live="polite">
           ↶ Last swipe undone
