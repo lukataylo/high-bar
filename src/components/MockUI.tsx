@@ -42,7 +42,10 @@ function Dashboard({ compact }: { compact?: boolean }) {
   return (
     <div className="ui">
       <div className="ui-eyebrow">Analytics</div>
-      <h1 className="ui-title" style={{ fontSize: compact ? "1.4em" : "1.9em" }}>
+      <h1
+        className="ui-title"
+        style={{ fontSize: compact ? "calc(1.4em * var(--type-scale-boost))" : "calc(1.9em * var(--type-scale-boost))" }}
+      >
         Revenue
       </h1>
       <div className="ui-row">
@@ -91,7 +94,10 @@ function Landing({ compact }: { compact?: boolean }) {
   return (
     <div className="ui" style={{ gap: "var(--space-3)" }}>
       <div className="ui-chip">New · v2.0</div>
-      <h1 className="ui-title" style={{ fontSize: compact ? "1.7em" : "2.4em" }}>
+      <h1
+        className="ui-title"
+        style={{ fontSize: compact ? "calc(1.7em * var(--type-scale-boost))" : "calc(2.4em * var(--type-scale-boost))" }}
+      >
         Ship in your taste.
       </h1>
       <p className="ui-sub">A design system that learns how you like things to look, then builds it for you.</p>
@@ -136,7 +142,10 @@ function MobileApp({ compact }: { compact?: boolean }) {
       </div>
       <div className="ui-card" style={{ textAlign: "center" }}>
         <div className="ui-eyebrow">Today</div>
-        <div className="ui-stat" style={{ fontSize: compact ? "2em" : "2.6em" }}>
+        <div
+          className="ui-stat"
+          style={{ fontSize: compact ? "calc(2em * var(--type-scale-boost))" : "calc(2.6em * var(--type-scale-boost))" }}
+        >
           72%
         </div>
         <div className="ui-sub" style={{ fontSize: "0.8em" }}>
@@ -163,7 +172,13 @@ function Poster({ compact }: { compact?: boolean }) {
   return (
     <div className="ui" style={{ justifyContent: "center", gap: "var(--space-2)" }}>
       <div className="ui-eyebrow">Vol. 04 — Type &amp; Form</div>
-      <h1 className="ui-title" style={{ fontSize: compact ? "2.4em" : "3.4em", lineHeight: 0.95 }}>
+      <h1
+        className="ui-title"
+        style={{
+          fontSize: compact ? "calc(2.4em * var(--type-scale-boost))" : "calc(3.4em * var(--type-scale-boost))",
+          lineHeight: 0.95,
+        }}
+      >
         FORM
         <br />
         FOLLOWS

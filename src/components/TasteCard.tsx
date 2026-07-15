@@ -11,10 +11,22 @@ interface Props {
   hue: number;
   swipeCount: number;
   overall: number;
+  narrow: boolean;
+  onToggleNarrow: (narrow: boolean) => void;
   onGenerate: () => void;
 }
 
-export function TasteCard({ taste, confidence, tokens, hue, swipeCount, overall, onGenerate }: Props) {
+export function TasteCard({
+  taste,
+  confidence,
+  tokens,
+  hue,
+  swipeCount,
+  overall,
+  narrow,
+  onToggleNarrow,
+  onGenerate,
+}: Props) {
   const name = styleName(taste, hue);
   const pairing = pickFontPairing(taste);
   const swatches = [
@@ -37,6 +49,20 @@ export function TasteCard({ taste, confidence, tokens, hue, swipeCount, overall,
           {swipeCount} swipes · {Math.round(overall * 100)}% locked
         </div>
       </div>
+
+      <div className="fp-narrow">
+        <button className={`fp-narrow-opt${narrow ? " active" : ""}`} onClick={() => onToggleNarrow(true)}>
+          Narrow
+        </button>
+        <button className={`fp-narrow-opt${narrow ? "" : " active"}`} onClick={() => onToggleNarrow(false)}>
+          Keep exploring
+        </button>
+      </div>
+      <p className="fp-narrow-hint">
+        {narrow
+          ? "Type pairing, accent color, and variant variety lock in as your taste gets more confident."
+          : "Always samples the freshest match and keeps variety wide, even late in a session."}
+      </p>
 
       <div className="fp-radar">
         <TasteRadar taste={taste} confidence={confidence} size={260} />

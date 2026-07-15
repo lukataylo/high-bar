@@ -1,6 +1,6 @@
 {
   "chroma": { "base": 0.02, "saturationGain": 0.16, "bgGain": 0.18 },
-  "contrast": { "boostBase": 0.5, "boostGain": 0.5, "minRatio": 4.5 },
+  "contrast": { "boostBase": 0.5, "boostGain": 0.5, "minRatio": 4.5, "primarySurfaceMinLGap": 0.12 },
   "lightness": {
     "darkBgBase": 0.22,
     "darkBgRange": 0.16,

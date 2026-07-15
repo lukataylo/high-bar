@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio, enforceContrast, inSrgbGamut, maxChromaInGamut } from "./color";
 import { DIMENSION_KEYS, neutralVector } from "./dimensions";
+import { pairingScore, pickFontPairing } from "./fonts";
+import { generatorConfig } from "./generatorConfig";
 import { applySwipe, confidence, initialState, learningRate, likedHue, replaySwipes } from "./model";
 import { paletteFromTaste } from "./palette";
+import { stickyBetter } from "./sticky";
+import { resolveStickyChoices } from "./stickyChoices";
 import { tokensFromTaste } from "./tokens";
+import { sampleVariant } from "./variants";
 import { generateTasteFile } from "./tasteFile";
 import { styleName } from "./name";
 
@@ -179,6 +184,105 @@ describe("color", () => {
     const pushedL = enforceContrast(bg, 0.9, 0.02, 250, 4.5); // text starts *lighter* than bg — wrong direction
     const ratio = contrastRatio(bg, { l: pushedL, c: 0.02, h: 250 });
     expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("typography grid", () => {
+  it("snaps line-height to the spacing grid instead of a floating ratio", () => {
+    const t = { ...neutralVector(), spacing_rhythm: 0.4 };
+    const tokens = tokensFromTaste(t, 200);
+    const gridStepPx = Math.max(2, tokens.spaceUnitPx / 2);
+    const lineHeightPx = tokens.lineHeightRatio * 16;
+    // should land on (or extremely near) a multiple of the grid step
+    const remainder = lineHeightPx / gridStepPx - Math.round(lineHeightPx / gridStepPx);
+    expect(Math.abs(remainder)).toBeLessThan(0.01);
+  });
+
+  it("picks a named modular-scale ratio, not an arbitrary blend", () => {
+    const NAMED = [1.125, 1.2, 1.25, 1.333, 1.414, 1.5, 1.618];
+    for (const playfulness of [0, 0.3, 0.6, 0.9, 1]) {
+      const tokens = tokensFromTaste({ ...neutralVector(), playfulness }, 200);
+      expect(NAMED).toContain(tokens.typeScale);
+    }
+  });
+
+  it("differentiates type scale between a dense-serious and an airy-playful taste", () => {
+    const dense = tokensFromTaste({ ...neutralVector(), density: 0.9, playfulness: 0.05, type_class: 0.05 }, 200);
+    const airy = tokensFromTaste({ ...neutralVector(), density: 0.05, playfulness: 0.95, type_class: 0.95 }, 200);
+    expect(airy.typeScale).toBeGreaterThan(dense.typeScale);
+  });
+});
+
+describe("primary/surface differentiation", () => {
+  it("never lets the primary color collapse into the surface lightness", () => {
+    // an adversarial config where primary and surface start out close
+    const cfg = {
+      ...generatorConfig,
+      lightness: { ...generatorConfig.lightness, lightBgBase: 0.6, primaryLightLight: 0.58 },
+    };
+    const p = paletteFromTaste({ ...neutralVector(), mode: 0 }, 200, cfg);
+    const readL = (s: string) => parseFloat(s.match(/oklch\(([\d.]+)/)?.[1] ?? "0");
+    expect(Math.abs(readL(p.primary) - readL(p.surface))).toBeGreaterThanOrEqual(
+      cfg.contrast.primarySurfaceMinLGap - 0.005,
+    );
+  });
+});
+
+describe("sticky/hysteresis", () => {
+  it("allows a switch when confidence is low, blocks the same-size improvement when confidence is high", () => {
+    const marginCfg = { baseMargin: 0.03, confidenceGain: 0.35 };
+    // candidate beats current by 0.1 either way — only the required margin changes
+    expect(stickyBetter(0.5, 0.4, 0, marginCfg)).toBe(true); // low confidence -> small margin (0.03) -> switches
+    expect(stickyBetter(0.5, 0.4, 1, marginCfg)).toBe(false); // high confidence -> large margin (0.38) -> stays put
+  });
+
+  it("keeps a committed font pairing even if the vector wobbles back toward a rejected one", () => {
+    const committed = pickFontPairing({ ...neutralVector(), type_class: 0.5, playfulness: 0.45 });
+    const wobble = { ...neutralVector(), type_class: 0.52, playfulness: 0.43 }; // tiny wobble near the same boundary
+    const resolved = resolveStickyChoices(
+      wobble,
+      generatorConfig,
+      { pairing: committed, accentOffsetIndex: 0 },
+      /* overallConfidence */ 0.9,
+      /* narrow */ true,
+    );
+    expect(resolved.pairing.name).toBe(committed.name);
+  });
+
+  it("with narrow=false always returns the freshest nearest match, ignoring any previous commitment", () => {
+    const t = { ...neutralVector(), type_class: 0.95, playfulness: 0.1 };
+    const stale = pickFontPairing({ ...neutralVector(), type_class: 0.05, playfulness: 0.9 });
+    const resolved = resolveStickyChoices(t, generatorConfig, { pairing: stale, accentOffsetIndex: 0 }, 1, false);
+    expect(resolved.pairing.name).not.toBe(stale.name);
+    expect(pairingScore(resolved.pairing, t)).toBeLessThanOrEqual(pairingScore(stale, t));
+  });
+});
+
+describe("variant narrowing", () => {
+  it("narrow mode samples tighter around taste than keep-exploring at high confidence", () => {
+    let s = initialState();
+    const attrs = { ...neutralVector(), radius: 1 };
+    for (let i = 0; i < 10; i++) {
+      s = applySwipe(s, { cardId: `c${i}`, cardKind: "inspiration", direction: "like", attrs, hue: 40, at: i });
+    }
+
+    const spread = (narrow: boolean) => {
+      const samples = Array.from({ length: 200 }, (_, i) => sampleVariant(s, i + 1, narrow).attrs.radius);
+      const mean = samples.reduce((a, b) => a + b, 0) / samples.length;
+      return samples.reduce((acc, v) => acc + (v - mean) ** 2, 0) / samples.length;
+    };
+
+    expect(spread(true)).toBeLessThan(spread(false));
+  });
+
+  it("stops injecting off-taste probes once narrow mode is fully converged", () => {
+    let s = initialState();
+    const attrs = { ...neutralVector(), radius: 1 };
+    for (let i = 0; i < 20; i++) {
+      s = applySwipe(s, { cardId: `c${i}`, cardKind: "inspiration", direction: "superlike", attrs, hue: 40, at: i });
+    }
+    const anyOffTaste = Array.from({ length: 60 }, (_, i) => sampleVariant(s, i + 1, true).offTaste).some(Boolean);
+    expect(anyOffTaste).toBe(false);
   });
 });
 

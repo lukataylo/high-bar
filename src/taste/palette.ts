@@ -39,22 +39,42 @@ function gamutSafe(l: number, c: number, h: number, alpha = 1): string {
   return oklch(l, capped, h, alpha);
 }
 
-// Pick an accent hue offset from the primary: low saturation+playfulness
-// ("boldness") favors a narrow, analogous offset that reads as harmonious;
-// high boldness favors a wide, complementary offset that reads as intentional
-// contrast. Replaces a single fixed +150 offset for every taste.
-function pickAccentOffset(t: TasteVector, cfg: GeneratorConfig): number {
+// How bold a palette should read: low saturation+playfulness favors a
+// narrow, analogous accent offset that reads as harmonious; high boldness
+// favors a wide, complementary offset that reads as intentional contrast.
+export function boldnessOf(t: TasteVector): number {
+  return clamp01((t.saturation + t.playfulness) / 2);
+}
+
+// Which harmony-offset bucket the current taste's boldness falls into.
+// Exported (rather than folded into paletteFromTaste) so the sticky resolver
+// can compute this once, decide whether to keep the previous bucket, and
+// hand the resolved index back in as an override.
+export function accentOffsetIndex(t: TasteVector, cfg: GeneratorConfig): number {
   const offsets = cfg.hue.harmonyOffsets;
-  const boldness = clamp01((t.saturation + t.playfulness) / 2);
-  const idx = Math.min(offsets.length - 1, Math.floor(boldness * offsets.length));
-  return offsets[idx];
+  const idx = Math.min(offsets.length - 1, Math.floor(boldnessOf(t) * offsets.length));
+  return idx;
+}
+
+// Lower is better — distance from boldness to bucket `idx`'s center. Used to
+// compare "how good a fit is the currently-committed bucket" against "how
+// good a fit is the fresh nearest bucket" on the same scale.
+export function accentOffsetIndexScore(idx: number, t: TasteVector, cfg: GeneratorConfig): number {
+  const n = cfg.hue.harmonyOffsets.length;
+  const center = (idx + 0.5) / n;
+  return Math.abs(boldnessOf(t) - center);
 }
 
 // Derive a full palette from the taste vector + a dominant hue (degrees).
 // - mode drives light/dark lightness bands
 // - saturation drives chroma
 // - contrast enforces a real minimum WCAG contrast ratio (not just a wider gap)
-export function paletteFromTaste(t: TasteVector, hue: number, cfg: GeneratorConfig = generatorConfig): Palette {
+export function paletteFromTaste(
+  t: TasteVector,
+  hue: number,
+  cfg: GeneratorConfig = generatorConfig,
+  accentOffsetIndexOverride?: number,
+): Palette {
   const dark = t.mode; // 0 light -> 1 dark
   const chroma = cfg.chroma.base + t.saturation * cfg.chroma.saturationGain; // muted -> vivid
   const ls = cfg.lightness;
@@ -94,8 +114,18 @@ export function paletteFromTaste(t: TasteVector, hue: number, cfg: GeneratorConf
   const wantedRatio = cfg.contrast.minRatio * (0.7 + boost * 0.6);
   textL = enforceContrast({ l: bgL, c: bgChroma, h: hue }, textL, textChroma, hue, wantedRatio);
 
-  const primaryL = dark >= 0.5 ? ls.primaryLightDark : ls.primaryLightLight;
-  const accentHue = hue + pickAccentOffset(t, cfg);
+  let primaryL = dark >= 0.5 ? ls.primaryLightDark : ls.primaryLightLight;
+  // A primary that lands too close in lightness to the surface it sits on
+  // reads as the same fill — buttons and cards need to stay visually
+  // distinct elements, not just differently-hued versions of the same tone.
+  const minGap = cfg.contrast.primarySurfaceMinLGap;
+  if (Math.abs(primaryL - surfaceL) < minGap) {
+    const pushLighter = primaryL >= surfaceL;
+    primaryL = clamp01(pushLighter ? surfaceL + minGap : surfaceL - minGap);
+  }
+
+  const offsetIdx = accentOffsetIndexOverride ?? accentOffsetIndex(t, cfg);
+  const accentHue = hue + cfg.hue.harmonyOffsets[offsetIdx];
   const accentL = dark >= 0.5 ? 0.75 : 0.6;
 
   return {

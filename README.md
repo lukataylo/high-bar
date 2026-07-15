@@ -28,8 +28,14 @@ cannot invent because it is derived from your gestures.
 3. **The Mirror** — a generic SaaS dashboard styled entirely by CSS variables
    mapped from `t` via the pure function [`tokensFromTaste`](src/taste/tokens.ts).
    Every swipe re-derives the palette (OKLCH), type pairing, radius, spacing,
-   depth and motion with a smooth transition. Paste a real URL into the preview's
-   address bar and the same tokens restyle *that* live site instead (see below).
+   depth and motion with a smooth transition. Line-height is snapped to the
+   same grid as the spacing scale (real vertical rhythm, not a floating
+   ratio), and headline sizes follow a named modular-scale ratio (Major
+   Third, Perfect Fourth, Golden Ratio, …) chosen from taste rather than a
+   fixed multiplier — every generated style is one cohesive typographic
+   system, not independently-tuned numbers. Paste a real URL into the
+   preview's address bar and the same tokens restyle *that* live site
+   instead (see below).
 4. **The Taste File** — one tap opens an export modal with three targets, all
    derived from the same taste vector (`src/taste/tasteFile.ts`): a Cursor
    rules file (`.cursor/rules/taste.mdc`), a **Claude Skill**
@@ -48,6 +54,19 @@ the right) above ~900px wide. Desktop also gets arrow-key swiping
 (←/→/↑ for pass/like/superlike), Cmd/Ctrl+Z to undo, and a persistent Undo
 button in the deck header — mobile's shake-to-undo still works too, but
 undo was previously unreachable without a touchscreen and accelerometer.
+
+**Narrows, doesn't revert.** Discrete picks like font pairing and accent-hue
+harmony used to be recomputed fresh every render via nearest-match, which
+could visibly flip back to a previously-rejected option if the taste vector
+wobbled near a decision boundary. `src/taste/stickyChoices.ts` adds
+confidence-scaled hysteresis: switching is easy early in a session and
+requires a clearly-better match once confidence is high, so a committed
+choice converges and *stays* converged. Variant-card exploration noise
+(`src/taste/variants.ts`) shrinks on a steeper curve for the same reason, and
+the deliberate "off-taste probe" card spaces out and eventually stops once
+you're fully converged, instead of continuing to yank the deck back toward
+already-rejected territory. The Style Compass tab has a **Narrow / Keep
+exploring** toggle if you'd rather it never lock in.
 
 The entire swipe loop is pure math — **zero network latency, no API key, no LLM
 call** to run the core demo, and the generator itself never calls out to a model
@@ -70,9 +89,14 @@ offline, non-LLM training loop against real, scraped design sites:
   `src/`, so it's a genuinely hidden eval set: the generator can't have been
   tuned to it.
 - **`pnpm bench:eval`** — scores the shipped `generatorConfig.json` against
-  the hidden holdout set on four measurable axes (real WCAG contrast, sRGB
-  gamut validity, chroma fidelity after gamut clamping, accent/primary hue
-  separation) and fails if consistency regresses below a threshold. Wired
+  the hidden holdout set on five measurable per-style axes (real WCAG
+  contrast, sRGB gamut validity, chroma fidelity after gamut clamping,
+  accent/primary hue separation, and cohesion — line-height grid alignment
+  plus primary-vs-surface distinguishability) *and* one batch-level axis:
+  differentiation, the percentage of holdout-pair styles that render
+  visually distinct from each other, so the generator can't individually
+  ace every metric while quietly collapsing many different real sites
+  toward the same look. Fails the build if any threshold regresses. Wired
   into CI (`.github/workflows/ci.yml` and `deploy.yml`) and mirrored as a
   vitest test (`src/taste/consistency.test.ts`).
 - **`pnpm bench:optimize`** — a simulated-annealing-flavored coordinate search
@@ -81,7 +105,8 @@ offline, non-LLM training loop against real, scraped design sites:
   same hidden set, that only ever writes back an improvement. Re-run it after
   changing the scraped corpus or the scoring rubric to re-tune the generator.
 
-Current shipped consistency: **~99.9/100 mean** across the 10-site hidden holdout.
+Current shipped consistency: **~99.9/100 mean**, **95.6% differentiation**,
+across the 10-site hidden holdout.
 
 ## Restyle any site
 

@@ -8,7 +8,7 @@ import tuned from "./generatorConfig.json";
 // still a pure function over these numbers, no network call, no LLM.
 export interface GeneratorConfig {
   chroma: { base: number; saturationGain: number; bgGain: number };
-  contrast: { boostBase: number; boostGain: number; minRatio: number };
+  contrast: { boostBase: number; boostGain: number; minRatio: number; primarySurfaceMinLGap: number };
   lightness: {
     darkBgBase: number;
     darkBgRange: number;
@@ -49,7 +49,7 @@ export interface GeneratorConfig {
 // of an explicit training run.
 export const DEFAULT_CONFIG: GeneratorConfig = {
   chroma: { base: 0.02, saturationGain: 0.16, bgGain: 0.18 },
-  contrast: { boostBase: 0.5, boostGain: 0.5, minRatio: 4.5 },
+  contrast: { boostBase: 0.5, boostGain: 0.5, minRatio: 4.5, primarySurfaceMinLGap: 0.12 },
   lightness: {
     darkBgBase: 0.22,
     darkBgRange: 0.16,

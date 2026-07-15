@@ -63,13 +63,21 @@ export const FONT_PAIRINGS: FontPairing[] = [
   },
 ];
 
+// Lower is better — distance from this pairing's class/playfulness center to
+// the taste vector. Exported so the sticky resolver can compare "how good is
+// the currently-committed pairing" against "how good is the fresh nearest
+// match" on the same scale.
+export function pairingScore(p: FontPairing, t: TasteVector): number {
+  const classDist = Math.abs(p.classCenter - t.type_class);
+  const playDist = Math.abs(p.playful - t.playfulness) * 0.4;
+  return classDist + playDist;
+}
+
 export function pickFontPairing(t: TasteVector): FontPairing {
   let best = FONT_PAIRINGS[0];
   let bestScore = Infinity;
   for (const p of FONT_PAIRINGS) {
-    const classDist = Math.abs(p.classCenter - t.type_class);
-    const playDist = Math.abs(p.playful - t.playfulness) * 0.4;
-    const score = classDist + playDist;
+    const score = pairingScore(p, t);
     if (score < bestScore) {
       bestScore = score;
       best = p;

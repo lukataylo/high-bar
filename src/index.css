@@ -292,10 +292,16 @@ button {
   --weight-display: 700;
   --weight-body: 400;
   --line-height: 1.5;
+  --type-scale: 1.25;
   --letter-spacing: 0em;
   --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   --motion-ms: 320ms;
   --grain-opacity: 0;
+  /* Every hardcoded em size in the mockups below was tuned around a Major
+     Third (1.25) scale — this normalizes --type-scale against that baseline
+     so hierarchy elements grow/shrink from taste without redesigning every
+     size by hand. */
+  --type-scale-boost: calc(var(--type-scale) / 1.25);
 
   position: relative;
   background: var(--bg);

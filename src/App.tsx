@@ -13,6 +13,8 @@ import {
 } from "./taste/model";
 import { sampleVariant } from "./taste/variants";
 import { tokensFromTaste } from "./taste/tokens";
+import { generatorConfig } from "./taste/generatorConfig";
+import { resolveStickyChoices, type StickyChoices } from "./taste/stickyChoices";
 import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
 import { SitePreview } from "./components/SitePreview";
@@ -59,6 +61,11 @@ export default function App() {
   const [showClients, setShowClients] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [addressInput, setAddressInput] = useState("");
+  // Narrow (default): font pairing / accent-hue bucket lock in and variant
+  // exploration tightens as confidence rises. Keep exploring: always take
+  // the freshest nearest match and keep sampling wide, even late in a
+  // session — see stickyChoices.ts / variants.ts.
+  const [narrowMode, setNarrowMode] = useState(true);
 
   const producedRef = useRef(0);
   const inspIdxRef = useRef(0);
@@ -66,6 +73,12 @@ export default function App() {
   const lastMotionRef = useRef({ x: 0, y: 0, z: 0 });
   const lastShakeRef = useRef(0);
   const undoTimerRef = useRef<number | null>(null);
+  const stickyRef = useRef<StickyChoices | null>(null);
+  // produceCard below is created once (useRef initializer) but narrowMode
+  // can change on every render, so it reads this ref rather than closing
+  // over the (potentially stale) state value directly.
+  const narrowModeRef = useRef(narrowMode);
+  narrowModeRef.current = narrowMode;
 
   const produceCard = useRef((from: TasteState): DeckCard => {
     const produced = producedRef.current;
@@ -76,7 +89,7 @@ export default function App() {
 
     if (useVariant) {
       variantIdxRef.current += 1;
-      return sampleVariant(from, variantIdxRef.current);
+      return sampleVariant(from, variantIdxRef.current, narrowModeRef.current);
     }
     const card = INSPIRATION[inspIdxRef.current % INSPIRATION.length] as InspirationCard;
     inspIdxRef.current += 1;
@@ -106,6 +119,7 @@ export default function App() {
     producedRef.current = 0;
     inspIdxRef.current = 0;
     variantIdxRef.current = 0;
+    stickyRef.current = null; // a different client's locked-in pairing/hue shouldn't carry over
     setState(profile.state);
     setQueue(Array.from({ length: VISIBLE_STACK }, () => produceCard(profile.state)));
     setDeckHistory([]);
@@ -133,9 +147,19 @@ export default function App() {
   }
 
   const hue = likedHue(state);
-  const tokens = useMemo(() => tokensFromTaste(state.taste, hue), [state.taste, hue]);
   const conf = useMemo(() => confidence(state), [state]);
   const overall = overallConfidence(state);
+
+  // Resolved once per render from the previous commit (stickyRef), not
+  // memoized — resolveStickyChoices is cheap, and this keeps "previous" and
+  // "next" trivially consistent without a separate effect.
+  const sticky = resolveStickyChoices(state.taste, generatorConfig, stickyRef.current, overall, narrowMode);
+  stickyRef.current = sticky;
+
+  const tokens = useMemo(
+    () => tokensFromTaste(state.taste, hue, generatorConfig, sticky),
+    [state.taste, hue, sticky],
+  );
 
   function handleSwipe(direction: SwipeDirection) {
     const top = queue[0];
@@ -469,6 +493,8 @@ export default function App() {
             hue={hue}
             swipeCount={state.swipes.length}
             overall={overall}
+            narrow={narrowMode}
+            onToggleNarrow={setNarrowMode}
             onGenerate={generate}
           />
         </div>

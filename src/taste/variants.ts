@@ -19,13 +19,28 @@ function gaussian(mean: number, sd: number): number {
   return mean + z * sd;
 }
 
-// Sample a variant near the current taste. σ starts wide (0.25) and shrinks as
-// confidence rises, so exploration narrows into exploitation over the session.
-// Every 8th variant is deliberately off-taste to keep the contrast visceral.
-export function sampleVariant(state: TasteState, index: number): VariantCard {
+const SIGMA_MAX = 0.25;
+const SIGMA_FLOOR = 0.05; // never fully freezes — some noise always survives
+const SIGMA_EXPONENT = 1.6; // > 1 biases the curve to narrow harder in the back half of the session
+
+// Sample a variant near the current taste. σ starts wide (0.25) and shrinks
+// as confidence rises, so exploration narrows into exploitation over the
+// session. Every Nth variant is deliberately off-taste to keep the contrast
+// visceral — but in Narrow mode both effects strengthen with confidence:
+// the curve shrinks steeply instead of gently, and the off-taste probe
+// spaces out (then stops entirely once truly converged) instead of
+// continuing to yank the deck back toward already-rejected territory
+// forever. Keep-exploring mode reproduces the original constant-width,
+// constant-rate behavior.
+export function sampleVariant(state: TasteState, index: number, narrow: boolean): VariantCard {
   const conf = overallConfidence(state);
-  const sigma = 0.25 * (1 - 0.6 * conf); // 0.25 -> ~0.10
-  const offTaste = index > 0 && index % 8 === 0;
+  const sigma = narrow
+    ? Math.max(SIGMA_FLOOR, SIGMA_MAX * Math.pow(1 - conf, SIGMA_EXPONENT))
+    : 0.25 * (1 - 0.6 * conf); // legacy curve: 0.25 -> ~0.10
+
+  const probeInterval = narrow ? Math.round(8 + conf * 20) : 8; // 8 -> 28 as confidence rises
+  const probesActive = !narrow || conf < 0.92; // stop reverting once truly locked in
+  const offTaste = probesActive && index > 0 && index % probeInterval === 0;
 
   const attrs = {} as TasteVector;
   for (const k of DIMENSION_KEYS) {

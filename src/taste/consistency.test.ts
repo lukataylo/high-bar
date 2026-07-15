@@ -11,5 +11,6 @@ describe("hidden-eval consistency gate", () => {
     const result = scoreHoldout(holdout);
     expect(result.mean).toBeGreaterThanOrEqual(90);
     expect(result.min).toBeGreaterThanOrEqual(75);
+    expect(result.differentiation).toBeGreaterThanOrEqual(80);
   });
 });
