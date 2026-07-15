@@ -1,5 +1,6 @@
 import { clamp01, type TasteVector } from "./dimensions";
 import { pickFontPairing, pickFontWeight } from "./fonts";
+import { generatorConfig, type GeneratorConfig } from "./generatorConfig";
 import { paletteFromTaste, type Palette } from "./palette";
 
 // A resolved set of design tokens. `cssVars` is what actually drives every
@@ -22,32 +23,38 @@ export interface Tokens {
 
 // THE load-bearing mapping. Pure function: taste vector (+ derived hue) in,
 // design tokens out. Hand-verify this; everything else can be vibe-checked.
-export function tokensFromTaste(t: TasteVector, hue: number): Tokens {
-  const palette = paletteFromTaste(t, hue);
+// `cfg` defaults to the shipped, trained config — the offline bench passes
+// candidate configs here directly to score them without touching disk.
+export function tokensFromTaste(t: TasteVector, hue: number, cfg: GeneratorConfig = generatorConfig): Tokens {
+  const palette = paletteFromTaste(t, hue, cfg);
   const pairing = pickFontPairing(t);
   const weights = pickFontWeight(t);
 
   // radius: sharp (0) -> fully rounded (24px+)
-  const radiusPx = Math.round(t.radius * 24);
+  const radiusPx = Math.round(t.radius * cfg.radius.maxPx);
 
   // density + spacing_rhythm -> base spacing unit (tighter when dense)
-  const spaceUnitPx = +(4 + (1 - t.density) * 4 + t.spacing_rhythm * 6).toFixed(1);
+  const spaceUnitPx = +(
+    cfg.spacing.base +
+    (1 - t.density) * cfg.spacing.densityGain +
+    t.spacing_rhythm * cfg.spacing.rhythmGain
+  ).toFixed(1);
 
   // depth -> shadow token from none to layered
-  const shadow = shadowToken(t.depth, t.mode);
+  const shadow = shadowToken(t.depth, t.mode, cfg);
 
   // gradients -> optional decorative background gradient on primaries
-  const gradient = t.gradients > 0.55;
+  const gradient = t.gradients > cfg.thresholds.gradient;
   const gradientCss = gradient
     ? `linear-gradient(135deg, ${palette.primary}, ${palette.accent})`
     : palette.primary;
 
-  const decorated = t.ornament > 0.55;
-  const grain = t.texture > 0.6;
-  const lineHeight = (1.35 + t.spacing_rhythm * 0.35).toFixed(2);
-  const letterSpacing = (0.02 - t.type_class * 0.03).toFixed(3); // display tightens on serif
-  const motionMs = Math.round(120 + t.motion * 520);
-  const borderWidth = t.contrast > 0.6 && t.radius < 0.4 ? 2 : 1;
+  const decorated = t.ornament > cfg.thresholds.decorated;
+  const grain = t.texture > cfg.thresholds.grain;
+  const lineHeight = (cfg.type.lineHeightBase + t.spacing_rhythm * cfg.type.lineHeightGain).toFixed(2);
+  const letterSpacing = (cfg.type.letterSpacingBase - t.type_class * cfg.type.letterSpacingGain).toFixed(3); // display tightens on serif
+  const motionMs = Math.round(cfg.motion.base + t.motion * cfg.motion.gain);
+  const borderWidth = t.contrast > cfg.thresholds.borderWidthContrast && t.radius < cfg.thresholds.borderWidthRadius ? 2 : 1;
 
   const cssVars: Record<string, string> = {
     "--bg": palette.bg,
@@ -62,7 +69,7 @@ export function tokensFromTaste(t: TasteVector, hue: number): Tokens {
     "--primary-text": palette.primaryText,
     "--accent": palette.accent,
     "--radius": `${radiusPx}px`,
-    "--radius-sm": `${Math.round(radiusPx * 0.6)}px`,
+    "--radius-sm": `${Math.round(radiusPx * cfg.radius.smRatio)}px`,
     "--space-unit": `${spaceUnitPx}px`,
     "--space-2": `${(spaceUnitPx * 2).toFixed(1)}px`,
     "--space-3": `${(spaceUnitPx * 3).toFixed(1)}px`,
@@ -94,10 +101,10 @@ export function tokensFromTaste(t: TasteVector, hue: number): Tokens {
   };
 }
 
-function shadowToken(depth: number, mode: number): string {
+function shadowToken(depth: number, mode: number, cfg: GeneratorConfig): string {
   if (depth < 0.2) return "none";
   const d = clamp01(depth);
-  const alpha = (mode >= 0.5 ? 0.5 : 0.14) * d;
+  const alpha = (mode >= 0.5 ? cfg.shadow.darkAlpha : cfg.shadow.lightAlpha) * d;
   const y1 = Math.round(2 + d * 6);
   const b1 = Math.round(6 + d * 24);
   const y2 = Math.round(1 + d * 2);

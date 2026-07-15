@@ -1,0 +1,30 @@
+{
+  "chroma": { "base": 0.02, "saturationGain": 0.16, "bgGain": 0.18 },
+  "contrast": { "boostBase": 0.5, "boostGain": 0.5, "minRatio": 4.5 },
+  "lightness": {
+    "darkBgBase": 0.22,
+    "darkBgRange": 0.16,
+    "darkSurfaceStep": 0.05,
+    "darkSurfaceAltStep": 0.09,
+    "darkBorderStep": 0.14,
+    "darkTextBase": 0.9,
+    "darkTextRange": 0.06,
+    "darkMuted": 0.62,
+    "lightBgBase": 0.97,
+    "lightBgRange": 0.06,
+    "lightSurfaceAltStep": 0.04,
+    "lightBorderStep": 0.1,
+    "lightTextBase": 0.2,
+    "lightTextRange": 0.06,
+    "lightMuted": 0.45,
+    "primaryLightDark": 0.72,
+    "primaryLightLight": 0.58
+  },
+  "hue": { "harmonyOffsets": [30, 150, 180] },
+  "radius": { "maxPx": 24, "smRatio": 0.6 },
+  "spacing": { "base": 4, "densityGain": 4, "rhythmGain": 6 },
+  "shadow": { "darkAlpha": 0.5, "lightAlpha": 0.14 },
+  "type": { "lineHeightBase": 1.35, "lineHeightGain": 0.35, "letterSpacingBase": 0.02, "letterSpacingGain": 0.03 },
+  "motion": { "base": 120, "gain": 520 },
+  "thresholds": { "gradient": 0.55, "decorated": 0.55, "grain": 0.6, "borderWidthContrast": 0.6, "borderWidthRadius": 0.4 }
+}

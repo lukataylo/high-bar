@@ -4,7 +4,6 @@ import { orderedCorpus, type InspirationCard } from "./corpus/corpus";
 import {
   applySwipe,
   confidence,
-  initialState,
   likedHue,
   overallConfidence,
   replaySwipes,
@@ -17,10 +16,21 @@ import { tokensFromTaste } from "./taste/tokens";
 import { generateTasteFile, type TasteFile } from "./taste/tasteFile";
 import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
+import { SitePreview } from "./components/SitePreview";
 import { TasteCard } from "./components/TasteCard";
 import { TasteFileModal } from "./components/TasteFileModal";
 import { SwipeHistoryModal } from "./components/SwipeHistoryModal";
+import { ClientSwitcherModal } from "./components/ClientSwitcherModal";
 import { SlopOffLogo } from "./components/SlopOffLogo";
+import {
+  createProfile,
+  deleteProfile,
+  getActiveProfile,
+  loadStore,
+  renameProfile,
+  saveTasteState,
+  switchProfile,
+} from "./lib/clientProfiles";
 
 const INSPIRATION = orderedCorpus();
 const VARIANTS_START = 10; // variants begin appearing after ~10 swipes
@@ -40,12 +50,14 @@ interface MotionPermissionDeviceEvent extends EventTarget {
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [state, setState] = useState<TasteState>(initialState);
+  const [profileStore, setProfileStore] = useState(() => loadStore());
+  const [state, setState] = useState<TasteState>(() => getActiveProfile(profileStore).state);
   const [tab, setTab] = useState<Tab>("swipe");
   const [tasteFile, setTasteFile] = useState<TasteFile | null>(null);
   const [deckHistory, setDeckHistory] = useState<DeckHistoryEntry[]>([]);
   const [undoNotice, setUndoNotice] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showClients, setShowClients] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [addressInput, setAddressInput] = useState("");
 
@@ -73,10 +85,53 @@ export default function App() {
     return { ...card, id: `${card.id}-${produced}` };
   }).current;
 
-  const [queue, setQueue] = useState<DeckCard[]>(() => {
-    const initial = initialState();
-    return Array.from({ length: VISIBLE_STACK }, () => produceCard(initial));
-  });
+  const [queue, setQueue] = useState<DeckCard[]>(() =>
+    Array.from({ length: VISIBLE_STACK }, () => produceCard(state)),
+  );
+
+  // Every taste-state change (a swipe, an undo, a swipe removal) is saved to
+  // the active client profile so it survives a reload.
+  useEffect(() => {
+    setProfileStore((store) => saveTasteState(store, store.activeId, state));
+  }, [state]);
+
+  // Switching clients (or creating/deleting one, which also changes the
+  // active id) loads that profile's taste state and restarts the swipe deck
+  // session — deck progress is per-session UI state, not part of a client's
+  // saved identity.
+  const activeProfileIdRef = useRef(profileStore.activeId);
+  useEffect(() => {
+    if (profileStore.activeId === activeProfileIdRef.current) return;
+    activeProfileIdRef.current = profileStore.activeId;
+    const profile = getActiveProfile(profileStore);
+    producedRef.current = 0;
+    inspIdxRef.current = 0;
+    variantIdxRef.current = 0;
+    setState(profile.state);
+    setQueue(Array.from({ length: VISIBLE_STACK }, () => produceCard(profile.state)));
+    setDeckHistory([]);
+    setTab("swipe");
+  }, [profileStore, produceCard]);
+
+  const activeProfile = getActiveProfile(profileStore);
+
+  function switchClient(id: string) {
+    setProfileStore((store) => switchProfile(store, id));
+    setShowClients(false);
+  }
+
+  function addClient(name: string) {
+    setProfileStore((store) => createProfile(store, name));
+    setShowClients(false);
+  }
+
+  function renameClient(id: string, name: string) {
+    setProfileStore((store) => renameProfile(store, id, name));
+  }
+
+  function removeClient(id: string) {
+    setProfileStore((store) => deleteProfile(store, id));
+  }
 
   const hue = likedHue(state);
   const tokens = useMemo(() => tokensFromTaste(state.taste, hue), [state.taste, hue]);
@@ -256,9 +311,14 @@ export default function App() {
         <div className="brand">
           <SlopOffLogo />
         </div>
-        <button className="brand-sub" onClick={() => setShowHistory(true)}>
-          {state.swipes.length} style {state.swipes.length === 1 ? "save" : "saves"}
-        </button>
+        <div className="topbar-right">
+          <button className="client-chip" onClick={() => setShowClients(true)}>
+            {activeProfile.name}
+          </button>
+          <button className="brand-sub" onClick={() => setShowHistory(true)}>
+            {state.swipes.length} style {state.swipes.length === 1 ? "save" : "saves"}
+          </button>
+        </div>
       </div>
 
       <div className="tabs">
@@ -308,7 +368,7 @@ export default function App() {
               </div>
               <div className="browser-content">
                 {previewUrl ? (
-                  <iframe className="preview-iframe" src={previewUrl} title="App preview" />
+                  <SitePreview url={previewUrl} tokens={tokens} />
                 ) : (
                   <MockUI tokens={tokens} layout="dashboard" />
                 )}
@@ -379,6 +439,17 @@ export default function App() {
           swipes={state.swipes}
           onRemove={removeSwipe}
           onClose={() => setShowHistory(false)}
+        />
+      )}
+      {showClients && (
+        <ClientSwitcherModal
+          profiles={profileStore.profiles}
+          activeId={profileStore.activeId}
+          onSwitch={switchClient}
+          onCreate={addClient}
+          onRename={renameClient}
+          onDelete={removeClient}
+          onClose={() => setShowClients(false)}
         />
       )}
       {undoNotice && (

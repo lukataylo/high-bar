@@ -1,4 +1,5 @@
 import type { DimensionKey, TasteVector } from "../taste/dimensions";
+import { SCRAPED_CORPUS } from "./scraped";
 
 export type Layout = "dashboard" | "landing" | "mobile" | "poster";
 
@@ -522,7 +523,13 @@ const RAW_CORPUS: RawInspiration[] = [
   },
 ];
 
-export const CORPUS: InspirationCard[] = RAW_CORPUS.map((c) => ({ ...c, kind: "inspiration" }));
+// Hand-authored cards span the style space deliberately; scraped cards are
+// real sites run through the training-bench extractor (`pnpm scrape`, see
+// bench/scrape/). Both feed the same deck.
+export const CORPUS: InspirationCard[] = [...RAW_CORPUS, ...SCRAPED_CORPUS].map((c) => ({
+  ...c,
+  kind: "inspiration",
+}));
 
 // Order the first N cards as maximally-contrasting pairs so early swipes carry
 // big signal (the deck shouldn't feel random at the start).

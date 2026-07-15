@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { contrastRatio, enforceContrast, inSrgbGamut, maxChromaInGamut } from "./color";
 import { DIMENSION_KEYS, neutralVector } from "./dimensions";
 import { applySwipe, confidence, initialState, learningRate, likedHue, replaySwipes } from "./model";
+import { paletteFromTaste } from "./palette";
 import { tokensFromTaste } from "./tokens";
 import { generateTasteFile } from "./tasteFile";
 import { styleName } from "./name";
@@ -126,6 +128,47 @@ describe("taste file", () => {
     const lux = styleName({ ...neutralVector(), type_class: 0.9, saturation: 0.2 }, 40);
     expect(brut).not.toEqual(lux);
     expect(brut.length).toBeGreaterThan(3);
+  });
+});
+
+describe("color", () => {
+  it("keeps in-gamut colors reported as in-gamut", () => {
+    expect(inSrgbGamut(0.9, 0.0, 0)).toBe(true);
+    expect(inSrgbGamut(0.5, 0.5, 0)).toBe(false); // way past sRGB at mid lightness
+  });
+
+  it("finds a chroma ceiling that is actually renderable", () => {
+    const c = maxChromaInGamut(0.5, 30);
+    expect(inSrgbGamut(0.5, c, 30)).toBe(true);
+    expect(inSrgbGamut(0.5, c + 0.05, 30)).toBe(false);
+  });
+
+  it("enforces a real WCAG contrast ratio, not just a lightness gap", () => {
+    const bg = { l: 0.95, c: 0.02, h: 250 };
+    const pushedL = enforceContrast(bg, 0.9, 0.02, 250, 4.5); // text starts *lighter* than bg — wrong direction
+    const ratio = contrastRatio(bg, { l: pushedL, c: 0.02, h: 250 });
+    expect(ratio).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe("paletteFromTaste", () => {
+  it("always clears AA contrast between text and background", () => {
+    const cases: Array<[number, number]> = [
+      [0, 0],
+      [1, 1],
+      [0.5, 0.5],
+      [0, 1],
+      [1, 0],
+    ];
+    for (const [mode, contrast] of cases) {
+      for (const hue of [0, 90, 180, 270]) {
+        const p = paletteFromTaste({ ...neutralVector(), mode, contrast }, hue);
+        const bgL = readL(p.bg);
+        const textL = readL(p.text);
+        const ratio = contrastRatio({ l: bgL, c: 0.02, h: hue }, { l: textL, c: 0.02, h: hue });
+        expect(ratio).toBeGreaterThanOrEqual(4.4); // small slack for the two swatches' differing chroma
+      }
+    }
   });
 });
 
