@@ -459,3 +459,14 @@ button {
   background: var(--accent);
   opacity: 0.9;
 }
+
+/* Desktop: the app shell itself widens (see app.css), but onboarding is a
+   marketing-style screen — keep it a centered, intentional column instead
+   of stretching every card and rule full-bleed across a wide viewport. */
+@media (min-width: 900px) {
+  .swipe-guide,
+  .evolution-note,
+  .start-button {
+    max-width: 480px;
+  }
+}

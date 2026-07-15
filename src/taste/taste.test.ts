@@ -114,13 +114,44 @@ describe("taste file", () => {
   it("produces a Cursor rules file with tokens and prose", () => {
     const t = { ...neutralVector(), radius: 0.05, gradients: 0.0, mode: 0.9 };
     const tokens = tokensFromTaste(t, 150);
-    const file = generateTasteFile(t, tokens, 150, 30);
+    const file = generateTasteFile("cursor", t, tokens, 150, 30);
     expect(file.fileName).toBe(".cursor/rules/taste.mdc");
     expect(file.content).toContain("alwaysApply: true");
     expect(file.content).toContain("Never use gradients");
     expect(file.content).toContain("Default to a dark UI");
     expect(file.content).toContain('"dimensions"');
     expect(file.content).toContain("30 swipes");
+  });
+
+  it("produces a Claude Skill with name/description frontmatter", () => {
+    const t = { ...neutralVector(), radius: 0.05, gradients: 0.0, mode: 0.9 };
+    const tokens = tokensFromTaste(t, 150);
+    const file = generateTasteFile("claude-skill", t, tokens, 150, 30);
+    expect(file.fileName).toMatch(/^\.claude\/skills\/taste-.+\/SKILL\.md$/);
+    expect(file.content).toMatch(/^---\nname: taste-/);
+    expect(file.content).toContain("description:");
+    expect(file.content).toContain("Never use gradients");
+    expect(file.content).toContain('"dimensions"');
+  });
+
+  it("produces an AGENTS.md-style prompt with no tool-specific frontmatter", () => {
+    const t = { ...neutralVector(), radius: 0.05, gradients: 0.0, mode: 0.9 };
+    const tokens = tokensFromTaste(t, 150);
+    const file = generateTasteFile("agents-prompt", t, tokens, 150, 30);
+    expect(file.fileName).toBe("AGENTS.md");
+    expect(file.content).not.toMatch(/^---/);
+    expect(file.content).toContain("Never use gradients");
+    expect(file.content).toContain('"dimensions"');
+  });
+
+  it("keeps the same style name across every export target", () => {
+    const t = { ...neutralVector(), type_class: 0.9, saturation: 0.15 };
+    const tokens = tokensFromTaste(t, 40);
+    const name = styleName(t, 40);
+    for (const target of ["cursor", "claude-skill", "agents-prompt"] as const) {
+      const file = generateTasteFile(target, t, tokens, 40, 12);
+      expect(file.content).toContain(name);
+    }
   });
 
   it("names styles distinctly across taste vectors", () => {

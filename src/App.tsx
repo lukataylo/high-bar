@@ -13,7 +13,6 @@ import {
 } from "./taste/model";
 import { sampleVariant } from "./taste/variants";
 import { tokensFromTaste } from "./taste/tokens";
-import { generateTasteFile, type TasteFile } from "./taste/tasteFile";
 import { SwipeCard, type DeckCard } from "./components/SwipeCard";
 import { MockUI } from "./components/MockUI";
 import { SitePreview } from "./components/SitePreview";
@@ -53,7 +52,7 @@ export default function App() {
   const [profileStore, setProfileStore] = useState(() => loadStore());
   const [state, setState] = useState<TasteState>(() => getActiveProfile(profileStore).state);
   const [tab, setTab] = useState<Tab>("swipe");
-  const [tasteFile, setTasteFile] = useState<TasteFile | null>(null);
+  const [showTasteFile, setShowTasteFile] = useState(false);
   const [deckHistory, setDeckHistory] = useState<DeckHistoryEntry[]>([]);
   const [undoNotice, setUndoNotice] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -217,6 +216,34 @@ export default function App() {
     return () => window.removeEventListener("devicemotion", onMotion);
   }, [showOnboarding, undoLastSwipe]);
 
+  // Desktop has no accelerometer to shake and no touchscreen to drag — arrow
+  // keys drive the deck and Cmd/Ctrl+Z undoes, mirroring the swipe gestures
+  // and shake-to-undo mobile gets for free.
+  useEffect(() => {
+    if (showOnboarding || tab !== "swipe") return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && /^(input|textarea)$/i.test(target.tagName)) return;
+
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
+        undoLastSwipe();
+        return;
+      }
+      if (queue.length === 0) return;
+      if (event.key === "ArrowLeft") handleSwipe("pass");
+      else if (event.key === "ArrowRight") handleSwipe("like");
+      else if (event.key === "ArrowUp") {
+        event.preventDefault(); // stop the page from scrolling
+        handleSwipe("superlike");
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
+
   useEffect(
     () => () => {
       if (undoTimerRef.current) window.clearTimeout(undoTimerRef.current);
@@ -237,7 +264,7 @@ export default function App() {
   }
 
   function generate() {
-    setTasteFile(generateTasteFile(state.taste, tokens, hue, state.swipes.length));
+    setShowTasteFile(true);
   }
 
   function removeSwipe(index: number) {
@@ -300,7 +327,7 @@ export default function App() {
         <button className="start-button" onClick={beginSession}>
           Start swiping <span>→</span>
         </button>
-        <small className="onboarding-foot">30 cards · about 2 minutes · shake to undo</small>
+        <small className="onboarding-foot">30 cards · about 2 minutes · undo anytime</small>
       </div>
     );
   }
@@ -378,6 +405,14 @@ export default function App() {
 
           <div className="deck-header">
             <span>Style cards</span>
+            <button
+              className="deck-undo"
+              onClick={undoLastSwipe}
+              disabled={deckHistory.length === 0}
+              title="Undo last swipe (Ctrl/Cmd+Z)"
+            >
+              ↶ Undo
+            </button>
             <span>{cardsRemaining} remaining</span>
           </div>
 
@@ -416,6 +451,12 @@ export default function App() {
               <button className="act like" onClick={() => handleSwipe("like")} aria-label="Like">
                 ♥
               </button>
+              <div className="keyboard-hint">
+                <span><kbd>←</kbd>Pass</span>
+                <span><kbd>↑</kbd>Love</span>
+                <span><kbd>→</kbd>Keep</span>
+                <span><kbd>{"⌘/Ctrl"}Z</kbd>Undo</span>
+              </div>
             </div>
           )}
         </div>
@@ -433,7 +474,15 @@ export default function App() {
         </div>
       )}
 
-      {tasteFile && <TasteFileModal file={tasteFile} onClose={() => setTasteFile(null)} />}
+      {showTasteFile && (
+        <TasteFileModal
+          taste={state.taste}
+          tokens={tokens}
+          hue={hue}
+          swipeCount={state.swipes.length}
+          onClose={() => setShowTasteFile(false)}
+        />
+      )}
       {showHistory && (
         <SwipeHistoryModal
           swipes={state.swipes}

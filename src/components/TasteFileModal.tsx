@@ -1,13 +1,25 @@
-import { useState } from "react";
-import type { TasteFile } from "../taste/tasteFile";
+import { useMemo, useState } from "react";
+import type { TasteVector } from "../taste/dimensions";
+import { generateTasteFile, TASTE_FILE_TARGETS, type TasteFileTarget } from "../taste/tasteFile";
+import type { Tokens } from "../taste/tokens";
 
 interface Props {
-  file: TasteFile;
+  taste: TasteVector;
+  tokens: Tokens;
+  hue: number;
+  swipeCount: number;
   onClose: () => void;
 }
 
-export function TasteFileModal({ file, onClose }: Props) {
+export function TasteFileModal({ taste, tokens, hue, swipeCount, onClose }: Props) {
+  const [target, setTarget] = useState<TasteFileTarget>("cursor");
   const [copied, setCopied] = useState(false);
+
+  const file = useMemo(
+    () => generateTasteFile(target, taste, tokens, hue, swipeCount),
+    [target, taste, tokens, hue, swipeCount],
+  );
+  const blurb = TASTE_FILE_TARGETS.find((t) => t.id === target)?.blurb ?? "";
 
   async function copy() {
     try {
@@ -30,7 +42,7 @@ export function TasteFileModal({ file, onClose }: Props) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "taste.mdc";
+    a.download = file.fileName.split("/").pop() ?? "taste.md";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -47,6 +59,19 @@ export function TasteFileModal({ file, onClose }: Props) {
             ✕
           </button>
         </div>
+
+        <div className="target-tabs">
+          {TASTE_FILE_TARGETS.map((t) => (
+            <button
+              key={t.id}
+              className={`target-tab${t.id === target ? " active" : ""}`}
+              onClick={() => setTarget(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
         <pre className="modal-code">{file.content}</pre>
         <div className="modal-actions">
           <button className="modal-btn primary" onClick={copy}>
@@ -56,9 +81,7 @@ export function TasteFileModal({ file, onClose }: Props) {
             Download
           </button>
         </div>
-        <p className="modal-foot">
-          Drop this in a repo and every Cursor agent build ships in your taste. You never described it — you reacted.
-        </p>
+        <p className="modal-foot">{blurb} You never described it — you reacted.</p>
       </div>
     </div>
   );

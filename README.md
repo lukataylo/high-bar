@@ -30,12 +30,24 @@ cannot invent because it is derived from your gestures.
    Every swipe re-derives the palette (OKLCH), type pairing, radius, spacing,
    depth and motion with a smooth transition. Paste a real URL into the preview's
    address bar and the same tokens restyle *that* live site instead (see below).
-4. **The Taste File** — one tap generates `.cursor/rules/taste.mdc`: the token
-   values as JSON plus a prose style guide. Copy or download it.
+4. **The Taste File** — one tap opens an export modal with three targets, all
+   derived from the same taste vector (`src/taste/tasteFile.ts`): a Cursor
+   rules file (`.cursor/rules/taste.mdc`), a **Claude Skill**
+   (`.claude/skills/taste-<name>/SKILL.md` with proper `name`/`description`
+   frontmatter Claude Code loads automatically), and a generic **Codex /
+   ChatGPT** prompt (`AGENTS.md` — drop in a repo root or paste straight into
+   a chat as a system-style prompt). Copy or download whichever fits.
 5. **Clients** — the topbar chip switches between saved client profiles, each
    with its own taste model and swipe history, persisted to `localStorage`. Built
    for the actual freelance/agency workflow: one taste session per real client,
    not one demo session per visitor.
+
+Every layout is responsive: a single-column swipe deck on mobile, and a
+two-pane desktop layout (deck + actions on the left, live preview pinned on
+the right) above ~900px wide. Desktop also gets arrow-key swiping
+(←/→/↑ for pass/like/superlike), Cmd/Ctrl+Z to undo, and a persistent Undo
+button in the deck header — mobile's shake-to-undo still works too, but
+undo was previously unreachable without a touchscreen and accelerometer.
 
 The entire swipe loop is pure math — **zero network latency, no API key, no LLM
 call** to run the core demo, and the generator itself never calls out to a model
